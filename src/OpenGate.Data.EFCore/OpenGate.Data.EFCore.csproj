@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>OpenGate Identity Server — EF Core data package. Provides extended stores for user profiles, audit logs and sessions. Supports SQL Server, PostgreSQL and SQLite.</Description>
+    <PackageTags>opengate;identity;efcore;entityframework;sqlserver;data</PackageTags>
+  </PropertyGroup>
+
+</Project>
+

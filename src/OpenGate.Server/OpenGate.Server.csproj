@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>OpenGate Identity Server — core configuration package. Provides the AddOpenGate() extension method with opinionated, secure defaults built on top of OpenIddict.</Description>
+    <PackageTags>opengate;identity;openiddict;oauth;oidc;aspnetcore</PackageTags>
+  </PropertyGroup>
+
+</Project>
+

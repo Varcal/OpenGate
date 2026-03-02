@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <Description>OpenGate Identity Server — UI package. Provides Razor Pages for Login, Consent, Logout and Register with Tailwind CSS, dark mode and i18n support.</Description>
+    <PackageTags>opengate;identity;ui;razorpages;login;consent</PackageTags>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+  </PropertyGroup>
+
+</Project>
+

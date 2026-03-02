@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/OpenGate.Sample.Basic/OpenGate.Sample.Basic.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/OpenGate.Data.EFCore/OpenGate.Data.EFCore.csproj" />
+    <Project Path="src/OpenGate.Server/OpenGate.Server.csproj" />
+    <Project Path="src/OpenGate.UI/OpenGate.UI.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OpenGate.Data.EFCore.Tests/OpenGate.Data.EFCore.Tests.csproj" />
+    <Project Path="tests/OpenGate.Server.Tests/OpenGate.Server.Tests.csproj" />
+  </Folder>
+</Solution>
