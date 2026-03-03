@@ -187,6 +187,9 @@ DocProject/Help/html
 # Click-Once directory
 publish/
 
+# Local build/test artifacts (used by template validation)
+artifacts/
+
 # Publish Web Output
 *.[Pp]ublish.xml
 *.azurePubxml

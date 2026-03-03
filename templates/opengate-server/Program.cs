@@ -1,13 +1,12 @@
-using OpenGate.Sample.Basic;
-using OpenGate.Server.Extensions;
-using OpenGate.Server.Options;
 using System.Net;
 using System.Security.Claims;
+using OpenGate.Server.Extensions;
+using OpenGate.Server.Options;
+using OpenGateServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── OpenGate Identity Server ─────────────────────────────────────────────────
-// Read connection string — validation deferred to first DB use so tests can replace the DbContext.
+// 1 OpenGate Identity Server 1
 var connectionString = builder.Configuration.GetConnectionString("OpenGate") ?? string.Empty;
 
 builder.Services
@@ -23,13 +22,13 @@ builder.Services
     .UseSqlServer(connectionString)
     .Build();
 
-// ── Razor Pages — serves OpenGate.UI pages ───────────────────────────────────
+// Razor Pages 1 serves OpenGate.UI pages
 builder.Services.AddRazorPages();
 
-// ── Seed demo data (users + OAuth clients) on startup ────────────────────────
+//#if (seed)
 builder.Services.AddHostedService<SeedDataService>();
+//#endif
 
-// ─────────────────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -39,9 +38,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-// Static files — includes _content/OpenGate.UI/css/opengate.css from the RCL
 app.UseStaticFiles();
-
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -50,7 +47,7 @@ app.MapRazorPages();
 
 // Root page:
 // - Anonymous users: redirect to Login
-// - Authenticated users: show a tiny "you are logged in" landing page
+// - Authenticated users: show a tiny landing page
 app.MapGet("/", (HttpContext ctx) =>
 {
     if (ctx.User.Identity?.IsAuthenticated != true)
@@ -62,16 +59,16 @@ app.MapGet("/", (HttpContext ctx) =>
 
     var html = $"""
 <!doctype html>
-<html lang="en">
-<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>OpenGate Sample</title></head>
-<body style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem;">
-  <h1>OpenGate.Sample.Basic</h1>
+<html lang=\"en\">
+<head><meta charset=\"utf-8\" /><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+<title>OpenGate Server</title></head>
+<body style=\"font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem;\">
+  <h1>OpenGate Identity Server</h1>
   <p>Logged in as <strong>{WebUtility.HtmlEncode(display)}</strong>.</p>
   <ul>
-    <li><a href="/.well-known/openid-configuration">OIDC discovery</a></li>
-    <li><a href="/health">Health</a></li>
-    <li><a href="/Account/Logout">Logout</a></li>
+    <li><a href=\"/.well-known/openid-configuration\">OIDC discovery</a></li>
+    <li><a href=\"/health\">Health</a></li>
+    <li><a href=\"/connect/logout\">Logout</a></li>
   </ul>
 </body>
 </html>
@@ -80,10 +77,9 @@ app.MapGet("/", (HttpContext ctx) =>
     return Results.Content(html, "text/html");
 });
 
-// Simple health check
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTimeOffset.UtcNow }));
 
 app.Run();
 
-// Required for WebApplicationFactory<Program> in integration tests
+// Required for WebApplicationFactory<Program> in integration tests (if you add them)
 public partial class Program { }

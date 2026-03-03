@@ -1,0 +1,5 @@
+# Test projects — allow underscore naming convention (Method_Scenario_Expected)
+# CA1707 conflicts with standard xUnit test naming conventions
+[*.cs]
+dotnet_diagnostic.CA1707.severity = none
+

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>@(ViewData["Title"] != null ? $"{ViewData["Title"]} — " : "")OpenGate Identity</title>
+
+    <!-- Compiled Tailwind CSS (built by: npm run build:css in OpenGate.UI) -->
+    <link rel="stylesheet" href="~/_content/OpenGate.UI/css/opengate.css" />
+
+    <!-- Preload Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet" />
+
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body class="h-full">
+
+    <!-- Dark mode toggle helper — reads system preference + localStorage -->
+    <script>
+        (function () {
+            const stored = localStorage.getItem('og-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (stored === 'dark' || (!stored && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
+    <!-- Auth shell: full-height, centered card -->
+    <div class="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8
+                bg-gray-50 dark:bg-gray-950">
+
+        <!-- Brand header -->
+        <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
+            <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center
+                        rounded-xl bg-primary-600 text-white shadow-lg">
+                <!-- Lock icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6
+                             a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8
+                             0v4h8z" />
+                </svg>
+            </div>
+            <span class="text-sm font-semibold tracking-widest uppercase
+                         text-primary-600 dark:text-primary-400">OpenGate</span>
+        </div>
+
+        <!-- Page content -->
+        <main class="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4">
+            @RenderBody()
+        </main>
+
+        <!-- Footer -->
+        <footer class="mt-8 text-center text-xs text-gray-400 dark:text-gray-600">
+            &copy; @DateTime.UtcNow.Year OpenGate &mdash;
+            <button onclick="toggleTheme()"
+                    class="underline hover:text-gray-600 dark:hover:text-gray-400 transition-colors">
+                Alternar tema
+            </button>
+        </footer>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('og-theme', isDark ? 'dark' : 'light');
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+

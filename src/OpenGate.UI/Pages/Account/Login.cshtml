@@ -1,0 +1,79 @@
+@page
+@model OpenGate.UI.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Entrar";
+}
+
+<div class="og-card">
+    <h1 class="mb-6 text-center text-xl font-semibold text-gray-900 dark:text-gray-100">
+        Entrar na sua conta
+    </h1>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="og-alert-error mb-5" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <span>@Model.ErrorMessage</span>
+        </div>
+    }
+
+    <form method="post">
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div asp-validation-summary="ModelOnly" class="og-alert-error mb-5"></div>
+
+        <div class="space-y-4">
+            <div>
+                <label asp-for="Input.Email" class="og-label">E-mail</label>
+                <input asp-for="Input.Email" type="email" autocomplete="email"
+                       class="og-input @(ViewData.ModelState["Input.Email"]?.Errors.Count > 0 ? "og-input-error" : "")"
+                       placeholder="voce@exemplo.com" />
+                <span asp-validation-for="Input.Email" class="og-field-error"></span>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label asp-for="Input.Password" class="og-label mb-0">Senha</label>
+                    <a href="/Account/ForgotPassword"
+                       class="text-xs font-medium text-primary-600 hover:text-primary-700
+                              dark:text-primary-400 dark:hover:text-primary-300">
+                        Esqueceu a senha?
+                    </a>
+                </div>
+                <input asp-for="Input.Password" type="password" autocomplete="current-password"
+                       class="og-input @(ViewData.ModelState["Input.Password"]?.Errors.Count > 0 ? "og-input-error" : "")"
+                       placeholder="••••••••" />
+                <span asp-validation-for="Input.Password" class="og-field-error"></span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input asp-for="Input.RememberMe" type="checkbox" id="rememberMe"
+                       class="h-4 w-4 rounded border-gray-300 text-primary-600
+                              focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700" />
+                <label for="rememberMe"
+                       class="text-sm text-gray-600 dark:text-gray-400 select-none">
+                    Lembrar neste dispositivo
+                </label>
+            </div>
+        </div>
+
+        <button type="submit" class="og-btn-primary mt-6">
+            Entrar
+        </button>
+    </form>
+
+    <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+        Não tem conta?
+        <a href="/Account/Register@(Model.ReturnUrl != null ? "?returnUrl=" + Uri.EscapeDataString(Model.ReturnUrl) : "")"
+           class="font-semibold text-primary-600 hover:text-primary-700
+                  dark:text-primary-400 dark:hover:text-primary-300">
+            Criar conta
+        </a>
+    </p>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

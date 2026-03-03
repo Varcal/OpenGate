@@ -1,0 +1,74 @@
+@page "/connect/authorize"
+@model OpenGate.UI.Pages.Connect.AuthorizeModel
+@{
+    ViewData["Title"] = "Autorizar acesso";
+}
+
+<div class="og-card">
+    <!-- Client info -->
+    <div class="mb-6 text-center">
+        <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center
+                    rounded-xl bg-primary-50 dark:bg-primary-900/30">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-primary-600 dark:text-primary-400"
+                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955
+                         11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29
+                         9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+        </div>
+        <h1 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            @(Model.ApplicationName ?? Model.ClientId) está solicitando acesso
+        </h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Conectado como <strong>@User.Identity?.Name</strong>
+        </p>
+    </div>
+
+    <!-- Scopes list -->
+    @if (Model.RequestedScopes.Count > 0)
+    {
+        <div class="mb-6">
+            <p class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Permissões solicitadas:
+            </p>
+            <ul class="space-y-2 rounded-lg border border-gray-200 dark:border-gray-700
+                       bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
+                @foreach (var scope in Model.RequestedScopes)
+                {
+                    <li class="flex items-start gap-2.5 text-sm text-gray-700 dark:text-gray-300">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             class="mt-0.5 h-4 w-4 shrink-0 text-primary-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414
+                                     0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clip-rule="evenodd" />
+                        </svg>
+                        <span>
+                            <strong class="font-medium">@scope.Name</strong>
+                            @if (!string.IsNullOrEmpty(scope.Description))
+                            {
+                                <span class="text-gray-500 dark:text-gray-400"> — @scope.Description</span>
+                            }
+                        </span>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+
+    <!-- Actions -->
+    <form method="post" class="space-y-3">
+        <button type="submit" name="decision" value="allow" class="og-btn-primary">
+            Permitir acesso
+        </button>
+        <button type="submit" name="decision" value="deny" class="og-btn-secondary">
+            Negar
+        </button>
+    </form>
+
+    <p class="mt-4 text-center text-xs text-gray-400 dark:text-gray-600">
+        Você pode revogar este acesso a qualquer momento nas configurações da sua conta.
+    </p>
+</div>
+

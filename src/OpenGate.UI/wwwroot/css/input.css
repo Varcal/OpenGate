@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+/* ── OpenGate custom design tokens ─────────────────────────────────────────── */
+@theme {
+  --color-primary-50:  #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-900: #312e81;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Base styles ────────────────────────────────────────────────────────────── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    color-scheme: light dark;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply dark:bg-gray-950 dark:text-gray-100;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary-500;
+  }
+}
+
+/* ── Component classes ─────────────────────────────────────────────────────── */
+@layer components {
+
+  /* Auth card */
+  .og-card {
+    @apply bg-white rounded-2xl shadow-lg p-8;
+    @apply dark:bg-gray-900 dark:shadow-gray-950;
+  }
+
+  /* Form field */
+  .og-input {
+    @apply block w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900;
+    @apply placeholder-gray-400 shadow-xs;
+    @apply focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 focus:outline-none;
+    @apply dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500;
+    @apply dark:focus:border-primary-400;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .og-input.og-input-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500/30;
+  }
+
+  /* Label */
+  .og-label {
+    @apply block text-sm font-medium text-gray-700 mb-1.5;
+    @apply dark:text-gray-300;
+  }
+
+  /* Primary button */
+  .og-btn-primary {
+    @apply flex w-full items-center justify-center rounded-lg px-4 py-2.5;
+    @apply bg-primary-600 text-sm font-semibold text-white shadow-xs;
+    @apply hover:bg-primary-700 active:bg-primary-700;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply dark:bg-primary-500 dark:hover:bg-primary-600;
+    transition: background-color 0.15s ease;
+  }
+
+  /* Secondary (outline) button */
+  .og-btn-secondary {
+    @apply flex w-full items-center justify-center rounded-lg px-4 py-2.5;
+    @apply border border-gray-300 bg-white text-sm font-semibold text-gray-700 shadow-xs;
+    @apply hover:bg-gray-50 active:bg-gray-100;
+    @apply dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700;
+    transition: background-color 0.15s ease;
+  }
+
+  /* Danger button */
+  .og-btn-danger {
+    @apply flex w-full items-center justify-center rounded-lg px-4 py-2.5;
+    @apply bg-red-600 text-sm font-semibold text-white shadow-xs;
+    @apply hover:bg-red-700;
+    @apply dark:bg-red-500 dark:hover:bg-red-600;
+    transition: background-color 0.15s ease;
+  }
+
+  /* Validation error message */
+  .og-field-error {
+    @apply mt-1.5 text-xs text-red-600 dark:text-red-400;
+  }
+
+  /* Alert box */
+  .og-alert-error {
+    @apply flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700;
+    @apply dark:border-red-800 dark:bg-red-950/40 dark:text-red-400;
+  }
+}
+

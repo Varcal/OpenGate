@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>OpenGateServer</RootNamespace>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="__OpenGateSrcPath__/OpenGate.Server/OpenGate.Server.csproj" />
+    <ProjectReference Include="__OpenGateSrcPath__/OpenGate.UI/OpenGate.UI.csproj" />
+    <ProjectReference Include="__OpenGateSrcPath__/OpenGate.Data.EFCore/OpenGate.Data.EFCore.csproj" />
+  </ItemGroup>
+
+</Project>

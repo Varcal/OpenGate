@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "OpenGate Contributors",
+  "name": "OpenGate Identity Server (in-repo)",
+  "identity": "OpenGate.Templates.OpenGateServer",
+  "shortName": "opengate-server",
+  "classifications": [
+    "Web",
+    "Security",
+    "Identity",
+    "OpenID Connect",
+    "OAuth"
+  ],
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "OpenGateServer",
+  "preferNameDirectory": true,
+  "symbols": {
+    "opengateSrcPath": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "../../src",
+      "description": "Caminho relativo para a pasta src/ do repositório OpenGate (para ProjectReference).",
+      "replaces": "__OpenGateSrcPath__"
+    },
+    "seed": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Inclui um hosted service que aplica migrations e cria usuário/clients de demo."
+    },
+    "issuerUri": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "http://localhost:5001",
+      "description": "Issuer URI anunciado no discovery (.well-known/openid-configuration).",
+      "replaces": "__ISSUER_URI__"
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(!seed)",
+          "exclude": [
+            "SeedDataService.cs"
+          ]
+        }
+      ]
+    }
+  ]
+}
