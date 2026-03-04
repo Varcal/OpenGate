@@ -32,16 +32,29 @@ public static class OpenGateDataExtensions
     public static IdentityBuilder AddOpenGateData(
         this IServiceCollection services,
         Action<DbContextOptionsBuilder> optionsAction)
+        => services.AddOpenGateData<OpenGateDbContext, OpenGateUser, IdentityRole>(optionsAction, configureIdentity: null);
+
+    /// <summary>
+    /// Registers a custom DbContext and fully custom ASP.NET Core Identity
+    /// user/role types backed by EF Core.
+    /// </summary>
+    public static IdentityBuilder AddOpenGateData<TContext, TUser, TRole>(
+        this IServiceCollection services,
+        Action<DbContextOptionsBuilder> optionsAction,
+        Action<IdentityOptions>? configureIdentity = null)
+        where TContext : DbContext
+        where TUser : class
+        where TRole : class
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(optionsAction);
 
-        services.AddDbContext<OpenGateDbContext>(optionsAction);
+        services.AddDbContext<TContext>(optionsAction);
 
         return services
-            .AddIdentityCore<OpenGateUser>(ConfigureIdentityDefaults)
-            .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<OpenGateDbContext>();
+            .AddIdentityCore<TUser>(BuildIdentityOptionsAction(configureIdentity))
+            .AddRoles<TRole>()
+            .AddEntityFrameworkStores<TContext>();
     }
 
     /// <summary>
@@ -50,12 +63,34 @@ public static class OpenGateDataExtensions
     /// </summary>
     public static IdentityBuilder AddOpenGateData<TContext>(
         this IServiceCollection services)
-        where TContext : OpenGateDbContext
+        where TContext : DbContext
+        => services.AddOpenGateData<TContext, OpenGateUser, IdentityRole>(configureIdentity: null);
+
+    /// <summary>
+    /// Registers a pre-configured custom DbContext and fully custom ASP.NET Core
+    /// Identity user/role types.
+    /// </summary>
+    public static IdentityBuilder AddOpenGateData<TContext, TUser, TRole>(
+        this IServiceCollection services,
+        Action<IdentityOptions>? configureIdentity = null)
+        where TContext : DbContext
+        where TUser : class
+        where TRole : class
     {
         return services
-            .AddIdentityCore<OpenGateUser>(ConfigureIdentityDefaults)
-            .AddRoles<IdentityRole>()
+            .AddIdentityCore<TUser>(BuildIdentityOptionsAction(configureIdentity))
+            .AddRoles<TRole>()
             .AddEntityFrameworkStores<TContext>();
+    }
+
+    private static Action<IdentityOptions> BuildIdentityOptionsAction(
+        Action<IdentityOptions>? configureIdentity)
+    {
+        return options =>
+        {
+            ConfigureIdentityDefaults(options);
+            configureIdentity?.Invoke(options);
+        };
     }
 
     private static void ConfigureIdentityDefaults(IdentityOptions options)

@@ -21,7 +21,7 @@ builder.Services
         if (builder.Configuration["OpenGate:IssuerUri"] is { Length: > 0 } issuer)
             opt.IssuerUri = new Uri(issuer);
     })
-    .UseConfiguredDatabase(builder.Configuration, connectionString)
+    .UsePostgreSql(connectionString)
     .Build();
 
 // ── Razor Pages — serves OpenGate.UI pages ───────────────────────────────────

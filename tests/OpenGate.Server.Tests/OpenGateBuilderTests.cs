@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenGate.Server;
 using OpenGate.Server.Extensions;
 using OpenGate.Server.Options;
@@ -12,6 +15,17 @@ namespace OpenGate.Server.Tests;
 /// </summary>
 public sealed class OpenGateBuilderTests
 {
+    private sealed class CustomUser : IdentityUser
+    {
+    }
+
+    private sealed class CustomRole : IdentityRole
+    {
+    }
+
+    private sealed class CustomIdentityDbContext(DbContextOptions<CustomIdentityDbContext> options)
+        : IdentityDbContext<CustomUser, CustomRole, string>(options);
+
     // ── AddOpenGate registration ──────────────────────────────────────────────
 
     [Fact]
@@ -175,5 +189,48 @@ public sealed class OpenGateBuilderTests
         var builder = services.AddOpenGate();
 
         Assert.Same(services, builder.Services);
+    }
+
+    [Fact]
+    public void AddOpenGate_Generic_Returns_Generic_Builder()
+    {
+        var services = new ServiceCollection();
+        var builder = services.AddOpenGate<CustomIdentityDbContext>();
+
+        Assert.NotNull(builder);
+        Assert.IsType<OpenGateBuilder<CustomIdentityDbContext>>(builder);
+    }
+
+    [Fact]
+    public void Builder_Build_Generic_Registers_Custom_Identity_Managers()
+    {
+        var services = new ServiceCollection();
+
+        services
+            .AddOpenGate<CustomIdentityDbContext>()
+            .UseDatabase(opt => opt.UseInMemoryDatabase("custom-identity-test"))
+            .Build<CustomUser, CustomRole>();
+
+        var provider = services.BuildServiceProvider();
+
+        Assert.NotNull(provider.GetService<UserManager<CustomUser>>());
+        Assert.NotNull(provider.GetService<RoleManager<CustomRole>>());
+        Assert.NotNull(provider.GetService<SignInManager<CustomUser>>());
+    }
+
+    [Fact]
+    public void Builder_Build_Generic_Allows_IdentityOptions_Override()
+    {
+        var services = new ServiceCollection();
+
+        services
+            .AddOpenGate<CustomIdentityDbContext>()
+            .UseDatabase(opt => opt.UseInMemoryDatabase("custom-identity-options-test"))
+            .Build<CustomUser, CustomRole>(opt => opt.Password.RequiredLength = 20);
+
+        var provider = services.BuildServiceProvider();
+        var identityOptions = provider.GetRequiredService<IOptions<IdentityOptions>>().Value;
+
+        Assert.Equal(20, identityOptions.Password.RequiredLength);
     }
 }

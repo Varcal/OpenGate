@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using OpenGate.Data.EFCore;
+using OpenGate.Data.EFCore.Entities;
 using OpenGate.Data.EFCore.Extensions;
 using OpenGate.Server.Options;
 using OpenIddict.EntityFrameworkCore;
@@ -11,7 +13,8 @@ namespace OpenGate.Server;
 /// Fluent builder returned by <c>services.AddOpenGate()</c>.
 /// Use it to configure the database provider and chain additional setup.
 /// </summary>
-public sealed class OpenGateBuilder
+public class OpenGateBuilder<TContext>
+    where TContext : DbContext
 {
     private readonly IServiceCollection _services;
     private readonly OpenGateOptions _options;
@@ -34,7 +37,7 @@ public sealed class OpenGateBuilder
     /// Configures OpenGate to use SQL Server as the backing store.
     /// </summary>
     /// <param name="connectionString">SQL Server connection string.</param>
-    public OpenGateBuilder UseSqlServer(string connectionString)
+    public OpenGateBuilder<TContext> UseSqlServer(string connectionString)
     {
         // Allow empty string — the SQL Server provider only validates the connection string
         // when a connection is actually attempted.  In tests the DbContext is replaced with
@@ -54,7 +57,7 @@ public sealed class OpenGateBuilder
     /// Configures OpenGate to use PostgreSQL as the backing store.
     /// </summary>
     /// <param name="connectionString">PostgreSQL connection string.</param>
-    public OpenGateBuilder UsePostgreSql(string connectionString)
+    public OpenGateBuilder<TContext> UsePostgreSql(string connectionString)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
 
@@ -71,7 +74,7 @@ public sealed class OpenGateBuilder
     /// Configures OpenGate to use SQLite as the backing store.
     /// </summary>
     /// <param name="connectionString">SQLite connection string.</param>
-    public OpenGateBuilder UseSqlite(string connectionString)
+    public OpenGateBuilder<TContext> UseSqlite(string connectionString)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
 
@@ -89,7 +92,7 @@ public sealed class OpenGateBuilder
     /// (e.g. Npgsql, SQLite).
     /// </summary>
     /// <param name="optionsAction">Action that configures the <see cref="DbContextOptionsBuilder"/>.</param>
-    public OpenGateBuilder UseDatabase(Action<DbContextOptionsBuilder> optionsAction)
+    public OpenGateBuilder<TContext> UseDatabase(Action<DbContextOptionsBuilder> optionsAction)
     {
         ArgumentNullException.ThrowIfNull(optionsAction);
         _options.ConfigureDatabase = builder =>
@@ -106,7 +109,7 @@ public sealed class OpenGateBuilder
     /// <summary>
     /// Overrides the security preset for this instance.
     /// </summary>
-    public OpenGateBuilder WithPreset(OpenGateSecurityPreset preset)
+    public OpenGateBuilder<TContext> WithPreset(OpenGateSecurityPreset preset)
     {
         _options.SecurityPreset = preset;
         return this;
@@ -115,7 +118,7 @@ public sealed class OpenGateBuilder
     /// <summary>
     /// Sets the issuer URI advertised in the OpenID Connect discovery document.
     /// </summary>
-    public OpenGateBuilder WithIssuer(Uri issuerUri)
+    public OpenGateBuilder<TContext> WithIssuer(Uri issuerUri)
     {
         ArgumentNullException.ThrowIfNull(issuerUri);
         _options.IssuerUri = issuerUri;
@@ -125,7 +128,7 @@ public sealed class OpenGateBuilder
     /// <summary>
     /// Sets the issuer URI from a string.
     /// </summary>
-    public OpenGateBuilder WithIssuer(string issuerUri)
+    public OpenGateBuilder<TContext> WithIssuer(string issuerUri)
         => WithIssuer(new Uri(issuerUri, UriKind.Absolute));
 
     // ── Token lifetimes ───────────────────────────────────────────────────────
@@ -133,7 +136,7 @@ public sealed class OpenGateBuilder
     /// <summary>
     /// Overrides the access token lifetime (default set by the active security preset).
     /// </summary>
-    public OpenGateBuilder WithAccessTokenLifetime(TimeSpan lifetime)
+    public OpenGateBuilder<TContext> WithAccessTokenLifetime(TimeSpan lifetime)
     {
         _options.AccessTokenLifetime = lifetime;
         return this;
@@ -142,7 +145,7 @@ public sealed class OpenGateBuilder
     /// <summary>
     /// Overrides the refresh token lifetime (default set by the active security preset).
     /// </summary>
-    public OpenGateBuilder WithRefreshTokenLifetime(TimeSpan lifetime)
+    public OpenGateBuilder<TContext> WithRefreshTokenLifetime(TimeSpan lifetime)
     {
         _options.RefreshTokenLifetime = lifetime;
         return this;
@@ -152,7 +155,32 @@ public sealed class OpenGateBuilder
     /// Validates the configuration and registers the OpenGate data services into DI.
     /// Call this after configuring the database provider.
     /// </summary>
-    public OpenGateBuilder Build()
+    public OpenGateBuilder<TContext> Build()
+        => Build<OpenGateUser, IdentityRole>(configureIdentity: null);
+
+    /// <summary>
+    /// Validates the configuration and registers the OpenGate data services into DI.
+    /// Call this after configuring the database provider.
+    /// </summary>
+    public OpenGateBuilder<TContext> Build(Action<IdentityOptions>? configureIdentity)
+        => Build<OpenGateUser, IdentityRole>(configureIdentity);
+
+    /// <summary>
+    /// Validates the configuration and registers OpenGate data/Identity services
+    /// using custom ASP.NET Core Identity user and role types.
+    /// </summary>
+    public OpenGateBuilder<TContext> Build<TUser, TRole>()
+        where TUser : class
+        where TRole : class
+        => Build<TUser, TRole>(configureIdentity: null);
+
+    /// <summary>
+    /// Validates the configuration and registers OpenGate data/Identity services
+    /// using custom ASP.NET Core Identity user and role types.
+    /// </summary>
+    public OpenGateBuilder<TContext> Build<TUser, TRole>(Action<IdentityOptions>? configureIdentity)
+        where TUser : class
+        where TRole : class
     {
         if (_options.ConfigureDatabase is null)
         {
@@ -167,12 +195,12 @@ public sealed class OpenGateBuilder
         // references Microsoft.AspNetCore.Identity.EntityFrameworkCore which does NOT
         // include SignInManager or the Identity cookie schemes.
         //
-        // AddSignInManager() — registers SignInManager<OpenGateUser> in DI.
+        // AddSignInManager() — registers SignInManager<TUser> in DI.
         // AddAuthentication + AddIdentityCookies — add the cookie auth handlers that
         // SignInManager requires to persist login sessions.  The Identity application
         // scheme is set as the default challenge so that OpenIddict redirects
         // unauthenticated users to the Login Razor Page.
-        _services.AddOpenGateData(_options.ConfigureDatabase)
+        _services.AddOpenGateData<TContext, TUser, TRole>(_options.ConfigureDatabase, configureIdentity)
                  .AddSignInManager();
 
         _services
@@ -185,5 +213,16 @@ public sealed class OpenGateBuilder
             .AddIdentityCookies();
 
         return this;
+    }
+}
+
+/// <summary>
+/// Default OpenGate builder bound to <see cref="OpenGateDbContext"/>.
+/// </summary>
+public sealed class OpenGateBuilder : OpenGateBuilder<OpenGateDbContext>
+{
+    internal OpenGateBuilder(IServiceCollection services, OpenGateOptions options)
+        : base(services, options)
+    {
     }
 }

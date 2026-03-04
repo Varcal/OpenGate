@@ -1,7 +1,6 @@
-using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OpenGate.Data.EFCore;
-using OpenGate.Data.EFCore.Entities;
 using OpenGate.Server.Internal;
 using OpenGate.Server.Options;
 using OpenIddict.Server;
@@ -49,17 +48,54 @@ public static class OpenGateServiceCollectionExtensions
         configure?.Invoke(options);
 
         var builder = new OpenGateBuilder(services, options);
+        ConfigureOpenGateCore<OpenGateDbContext>(services, options);
 
-        // Register OpenGate options in DI for access at runtime
+        // Register the builder in DI so Build() can be called lazily if needed
+        services.AddSingleton(builder);
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Registers all OpenGate Identity Server services with a fluent builder
+    /// targeting a custom Identity DbContext.
+    /// </summary>
+    public static OpenGateBuilder<TContext> AddOpenGate<TContext>(
+        this IServiceCollection services,
+        Action<OpenGateOptions>? configure = null)
+        where TContext : DbContext
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        var options = new OpenGateOptions();
+        configure?.Invoke(options);
+
+        var builder = new OpenGateBuilder<TContext>(services, options);
+        ConfigureOpenGateCore<TContext>(services, options);
+
+        // Register the builder in DI so Build() can be called lazily if needed
+        services.AddSingleton(builder);
+
+        return builder;
+    }
+
+    // -- Private helpers ------------------------------------------------------
+
+    private static void ConfigureOpenGateCore<TContext>(
+        IServiceCollection services,
+        OpenGateOptions options)
+        where TContext : DbContext
+    {
+        // Register OpenGate options in DI for access at runtime.
         services.AddSingleton(options);
 
-        // OpenIddict — registers the core + ASP.NET Core + EF Core integration
+        // OpenIddict registers the core + ASP.NET Core + EF Core integration.
         services.AddOpenIddict()
             .AddCore(core =>
             {
-                // OpenIddict will share the OpenGateDbContext registered by AddOpenGateData()
+                // OpenIddict shares the Identity DbContext registered by AddOpenGateData().
                 core.UseEntityFrameworkCore()
-                    .UseDbContext<OpenGateDbContext>();
+                    .UseDbContext<TContext>();
             })
             .AddServer(server =>
             {
@@ -75,18 +111,11 @@ public static class OpenGateServiceCollectionExtensions
             })
             .AddValidation(validation =>
             {
-                // Validate tokens against the local OpenIddict server
+                // Validate tokens against the local OpenIddict server.
                 validation.UseLocalServer();
                 validation.UseAspNetCore();
             });
-
-        // Register the builder in DI so Build() can be called lazily if needed
-        services.AddSingleton(builder);
-
-        return builder;
     }
-
-    // ── Private helpers ───────────────────────────────────────────────────────
 
     private static void ConfigureEndpoints(
         OpenIddictServerBuilder server,
@@ -122,11 +151,11 @@ public static class OpenGateServiceCollectionExtensions
         OpenGateOptions options)
     {
         server
-            // Authorization Code — the primary interactive flow
+            // Authorization Code is the primary interactive flow.
             .AllowAuthorizationCodeFlow()
-            // Refresh Token — enabled by default
+            // Refresh Token enabled by default.
             .AllowRefreshTokenFlow()
-            // Client Credentials — machine-to-machine
+            // Client Credentials for machine-to-machine.
             .AllowClientCredentialsFlow();
 
         if (options.EnableDeviceFlow)
@@ -139,10 +168,8 @@ public static class OpenGateServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        // Register commonly used OpenID Connect scopes so the default UI/flows work
-        // out-of-the-box without requiring explicit database seeding.
-        //
-        // Note: ApiScopeName defaults to "api" and is used by the sample app and integration tests.
+        // Register common OIDC scopes so default UI/flows work without explicit seeding.
+        // ApiScopeName defaults to "api" and is used by samples and integration tests.
         server.RegisterScopes(
             Scopes.OpenId,
             Scopes.Email,
@@ -183,14 +210,12 @@ public static class OpenGateServiceCollectionExtensions
         OpenIddictServerBuilder server,
         OpenGateOptions options)
     {
-        // Ephemeral keys regenerated on every restart — never use in production
+        // Ephemeral keys regenerated on every restart; never use in production.
         server.AddEphemeralEncryptionKey()
               .AddEphemeralSigningKey();
 
-        // Token and UserInfo endpoints are handled directly by OpenIddict — no
-        // custom controller action required.  Passthrough is only needed for
-        // endpoints that require a custom Razor Page / controller (Authorization,
-        // Logout) to render UI (consent form, logout page).
+        // Token and UserInfo endpoints are handled directly by OpenIddict.
+        // Passthrough is only needed for endpoints that render UI.
         var aspNet = server.UseAspNetCore()
               .DisableTransportSecurityRequirement()
               .EnableAuthorizationEndpointPassthrough()
@@ -200,7 +225,7 @@ public static class OpenGateServiceCollectionExtensions
         if (options.EnableDeviceFlow)
             aspNet.EnableEndUserVerificationEndpointPassthrough();
 
-        // Extended lifetimes for easier local debugging
+        // Extended lifetimes for local debugging.
         server.SetAccessTokenLifetime(TimeSpan.FromDays(1))
               .SetRefreshTokenLifetime(TimeSpan.FromDays(30))
               .SetAuthorizationCodeLifetime(TimeSpan.FromMinutes(30));
@@ -211,7 +236,7 @@ public static class OpenGateServiceCollectionExtensions
         OpenGateOptions options)
     {
         // In production, use persisted development certs (survive restarts).
-        // TODO: replace with real X.509 certificates from the machine store.
+        // TODO: replace with real X.509 certificates from machine store.
         server.AddDevelopmentEncryptionCertificate()
               .AddDevelopmentSigningCertificate();
 
@@ -228,7 +253,7 @@ public static class OpenGateServiceCollectionExtensions
               .SetAuthorizationCodeLifetime(options.AuthorizationCodeLifetime)
               .SetRefreshTokenReuseLeeway(TimeSpan.Zero);
 
-        // PKCE required for all authorization code flows
+        // PKCE required for all authorization code flows.
         server.RequireProofKeyForCodeExchange();
     }
 
@@ -236,16 +261,17 @@ public static class OpenGateServiceCollectionExtensions
         OpenIddictServerBuilder server,
         OpenGateOptions options)
     {
-        // Start from Production baseline
+        // Start from Production baseline.
         ApplyProductionPreset(server, options);
 
-        // Override with stricter lifetimes
+        // Override with stricter lifetimes.
         server.SetAccessTokenLifetime(TimeSpan.FromMinutes(15))
               .SetRefreshTokenLifetime(TimeSpan.FromHours(24))
               .SetRefreshTokenReuseLeeway(TimeSpan.Zero);
 
-        // Reference tokens — resource servers must introspect
+        // Reference tokens; resource servers must introspect.
         server.UseReferenceAccessTokens()
               .UseReferenceRefreshTokens();
     }
 }
+
