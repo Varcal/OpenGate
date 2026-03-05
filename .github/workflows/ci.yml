@@ -29,7 +29,7 @@ jobs:
         run: dotnet build OpenGate.slnx -c Release --no-restore
 
       - name: Test + Coverage
-        run: dotnet test OpenGate.slnx -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./TestResults
+        run: dotnet test OpenGate.slnx -c Release --no-build --collect:"XPlat Code Coverage" --settings coverage.runsettings --results-directory ./TestResults
 
       - name: Install ReportGenerator
         run: dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.*

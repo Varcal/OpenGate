@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using OpenIddict.EntityFrameworkCore;
@@ -11,6 +12,7 @@ namespace OpenGate.Data.EFCore.Design;
 /// Provider can be selected with <c>--provider=sqlserver|postgresql|sqlite</c>
 /// or environment variable <c>OPENGATE_EF_PROVIDER</c>.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Design-time factory — only invoked by dotnet-ef CLI, not testable in unit tests.")]
 internal sealed class OpenGateDbContextFactory : IDesignTimeDbContextFactory<OpenGateDbContext>
 {
     public OpenGateDbContext CreateDbContext(string[] args)
