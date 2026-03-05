@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using OpenGate.Data.EFCore;
 using OpenGate.Data.EFCore.Entities;
 using OpenGate.Data.EFCore.Extensions;
 
