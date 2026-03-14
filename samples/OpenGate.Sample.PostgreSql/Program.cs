@@ -1,4 +1,5 @@
 using OpenGate.Sample.PostgreSql;
+using OpenGate.Admin.Api.Extensions;
 using OpenGate.Server;
 using OpenGate.Server.Extensions;
 using OpenGate.Server.Options;
@@ -26,6 +27,7 @@ builder.Services
 
 // ── Razor Pages — serves OpenGate.UI pages ───────────────────────────────────
 builder.Services.AddRazorPages();
+builder.Services.AddOpenGateAdminApi();
 
 // ── Seed demo data (users + OAuth clients) on startup ────────────────────────
 builder.Services.AddHostedService<SeedDataService>();
@@ -48,6 +50,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapOpenGateAdminApi();
 
 // Root page:
 // - Anonymous users: redirect to Login
@@ -72,6 +75,7 @@ app.MapGet("/", (HttpContext ctx) =>
   <ul>
     <li><a href="/.well-known/openid-configuration">OIDC discovery</a></li>
     <li><a href="/health">Health</a></li>
+    {(ctx.User.IsInRole("Viewer") || ctx.User.IsInRole("Admin") || ctx.User.IsInRole("SuperAdmin") ? "<li><a href=\"/Admin\">Admin UI</a></li>" : string.Empty)}
     <li><a href="/connect/logout">Logout</a></li>
   </ul>
 </body>

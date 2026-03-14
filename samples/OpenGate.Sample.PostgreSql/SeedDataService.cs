@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using OpenGate.Admin.Api.Security;
 using OpenGate.Data.EFCore;
 using OpenGate.Data.EFCore.Entities;
 using OpenGate.Server.Options;
@@ -31,7 +32,10 @@ public sealed partial class SeedDataService(
         // 2. Demo user
         await SeedDemoUserAsync(sp, stoppingToken);
 
-        // 3. OAuth clients
+        // 3. Admin roles + assignment
+        await SeedAdminRolesAsync(sp, stoppingToken);
+
+        // 4. OAuth clients
         await SeedClientsAsync(sp, stoppingToken);
     }
 
@@ -63,6 +67,25 @@ public sealed partial class SeedDataService(
         else
             foreach (var e in result.Errors)
                 Log.DemoUserError(logger, e.Description);
+    }
+
+    private static async Task SeedAdminRolesAsync(IServiceProvider sp, CancellationToken ct)
+    {
+        var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = sp.GetRequiredService<UserManager<OpenGateUser>>();
+
+        foreach (var roleName in OpenGateAdminRoles.All)
+        {
+            if (!await roleManager.RoleExistsAsync(roleName))
+                await roleManager.CreateAsync(new IdentityRole(roleName));
+        }
+
+        var demoUser = await userManager.FindByEmailAsync("demo@opengate.test");
+        if (demoUser is null)
+            return;
+
+        if (!await userManager.IsInRoleAsync(demoUser, OpenGateAdminRoles.SuperAdmin))
+            await userManager.AddToRoleAsync(demoUser, OpenGateAdminRoles.SuperAdmin);
     }
 
     // ── OAuth clients ─────────────────────────────────────────────────────────
