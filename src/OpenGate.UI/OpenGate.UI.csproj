@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\OpenGate.Admin.Api\OpenGate.Admin.Api.csproj" />
     <ProjectReference Include="..\OpenGate.Server\OpenGate.Server.csproj" />
   </ItemGroup>
 

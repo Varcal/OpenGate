@@ -1,0 +1,230 @@
+@page
+@model OpenGate.UI.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Visão geral";
+}
+
+<section class="space-y-6">
+
+    <!-- Page header -->
+    <div class="og-page-header">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Visão geral</h1>
+            <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Dashboard operacional do OpenGate.</p>
+        </div>
+        <p class="text-xs text-gray-400 dark:text-gray-600">
+            Atualizado em @Model.Metrics.GeneratedAt.ToLocalTime().ToString("g")
+        </p>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+
+        <!-- Usuários -->
+        <div class="og-stat-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Usuários</p>
+                    <p class="mt-2 text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">@Model.Metrics.TotalUsers</p>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">@Model.Metrics.ActiveUsers ativos</p>
+                </div>
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                </div>
+            </div>
+            @if (Model.Metrics.TotalUsers > 0)
+            {
+                <div class="mt-4 h-1 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                    <div class="h-1 rounded-full bg-indigo-500 transition-all duration-500"
+                         style="width: @(Math.Min(100, (int)((double)Model.Metrics.ActiveUsers / Model.Metrics.TotalUsers * 100)))%"></div>
+                </div>
+            }
+        </div>
+
+        <!-- Clients -->
+        <div class="og-stat-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Clients</p>
+                    <p class="mt-2 text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">@Model.Metrics.ClientsTotal</p>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">OAuth / OpenID Connect</p>
+                </div>
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scopes -->
+        <div class="og-stat-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Scopes</p>
+                    <p class="mt-2 text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">@Model.Metrics.ScopesTotal</p>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Permissões documentadas</p>
+                </div>
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sessões ativas -->
+        <div class="og-stat-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Sessões ativas</p>
+                    <p class="mt-2 text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">@Model.Metrics.ActiveSessions</p>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Cookies válidos agora</p>
+                </div>
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit logs 24h -->
+        <div class="og-stat-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Eventos (24 h)</p>
+                    <p class="mt-2 text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">@Model.Metrics.AuditEventsLast24h</p>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Audit logs recentes</p>
+                </div>
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acesso rápido -->
+        <div class="og-stat-card border-primary-100 bg-gradient-to-br from-primary-50 to-white dark:border-primary-500/20 dark:from-primary-500/10 dark:to-gray-900">
+            <p class="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-400">Acesso rápido</p>
+            <div class="mt-3 flex flex-col gap-1.5">
+                <a href="/docs"
+                   class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5
+                          text-xs font-medium text-gray-700 shadow-xs transition-colors
+                          hover:border-gray-300 hover:bg-gray-50
+                          dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+                   target="_blank" rel="noopener">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    API Docs (Scalar)
+                    <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-3 w-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+                <a href="/openapi/v1.json"
+                   class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5
+                          text-xs font-medium text-gray-700 shadow-xs transition-colors
+                          hover:border-gray-300 hover:bg-gray-50
+                          dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+                   target="_blank" rel="noopener">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                    OpenAPI JSON
+                    <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-3 w-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+                <a href="/admin/api/users"
+                   class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5
+                          text-xs font-medium text-gray-700 shadow-xs transition-colors
+                          hover:border-gray-300 hover:bg-gray-50
+                          dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+                   target="_blank" rel="noopener">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Admin API
+                    <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-3 w-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent activity -->
+    <div class="grid gap-5 xl:grid-cols-2">
+
+        <!-- Últimos audit logs -->
+        <div class="og-table-wrap">
+            <div class="flex items-center justify-between border-b border-gray-100 px-5 py-3.5 dark:border-gray-800">
+                <div class="flex items-center gap-2">
+                    <span class="flex h-6 w-6 items-center justify-center rounded-md bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </span>
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Últimos audit logs</h2>
+                </div>
+                <a href="/Admin/AuditLogs" class="text-xs font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">Ver todos →</a>
+            </div>
+            @if (!Model.RecentAuditLogs.Any())
+            {
+                <div class="px-5 py-10 text-center text-sm text-gray-400 dark:text-gray-600">Nenhum evento recente.</div>
+            }
+            else
+            {
+                <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @foreach (var item in Model.RecentAuditLogs)
+                    {
+                        <div class="og-table-row flex items-center justify-between gap-4 px-5 py-3">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-medium text-gray-900 dark:text-gray-100">@item.EventType</p>
+                                <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                                    @(item.UserEmail ?? "anônimo") · @(item.ClientId ?? "sem client")
+                                </p>
+                            </div>
+                            <div class="flex shrink-0 flex-col items-end gap-1">
+                                <span class="@(item.Succeeded ? "og-badge-green" : "og-badge-red")">@(item.Succeeded ? "Sucesso" : "Falha")</span>
+                                <p class="text-xs text-gray-400 dark:text-gray-500">@item.OccurredAt.ToLocalTime().ToString("g")</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Sessões recentes -->
+        <div class="og-table-wrap">
+            <div class="flex items-center justify-between border-b border-gray-100 px-5 py-3.5 dark:border-gray-800">
+                <div class="flex items-center gap-2">
+                    <span class="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    </span>
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Sessões recentes</h2>
+                </div>
+                <a href="/Admin/Sessions" class="text-xs font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">Ver todas →</a>
+            </div>
+            @if (!Model.RecentSessions.Any())
+            {
+                <div class="px-5 py-10 text-center text-sm text-gray-400 dark:text-gray-600">Nenhuma sessão recente.</div>
+            }
+            else
+            {
+                <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @foreach (var item in Model.RecentSessions)
+                    {
+                        <div class="og-table-row flex items-center justify-between gap-4 px-5 py-3">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-medium text-gray-900 dark:text-gray-100">@(item.UserEmail ?? "usuário desconhecido")</p>
+                                <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                                    @(item.DeviceInfo ?? "dispositivo desconhecido") · @(item.ClientId ?? "sem client")
+                                </p>
+                            </div>
+                            <div class="flex shrink-0 flex-col items-end gap-1">
+                                <span class="@(item.IsActive ? "og-badge-green" : "og-badge-gray")">@(item.IsActive ? "Ativa" : "Encerrada")</span>
+                                <p class="text-xs text-gray-400 dark:text-gray-500">Expira @item.ExpiresAt.ToLocalTime().ToString("g")</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+</section>

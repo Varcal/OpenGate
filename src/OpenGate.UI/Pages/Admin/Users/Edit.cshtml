@@ -1,0 +1,89 @@
+@page "{id}"
+@model OpenGate.UI.Pages.Admin.Users.EditModel
+@{
+    ViewData["Title"] = "Editar usuário";
+}
+
+<section class="space-y-6">
+    <div class="og-page-header">
+        <div>
+            <h1 class="text-3xl font-semibold tracking-tight">Editar usuário</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Atualiza dados do perfil, estado da conta e roles administrativas.</p>
+        </div>
+        <a href="/Admin/Users" class="og-btn-ghost">Voltar</a>
+    </div>
+
+    <form method="post" class="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 dark:text-red-300"></div>
+
+        <div class="grid gap-4 lg:grid-cols-2">
+            <div>
+                <label asp-for="Input.Email" class="og-label"></label>
+                <input asp-for="Input.Email" class="og-input" />
+                <span asp-validation-for="Input.Email" class="og-field-error"></span>
+            </div>
+            <div>
+                <label asp-for="Input.UserName" class="og-label"></label>
+                <input asp-for="Input.UserName" class="og-input" />
+                <span asp-validation-for="Input.UserName" class="og-field-error"></span>
+            </div>
+            <div>
+                <label asp-for="Input.FirstName" class="og-label"></label>
+                <input asp-for="Input.FirstName" class="og-input" />
+            </div>
+            <div>
+                <label asp-for="Input.LastName" class="og-label"></label>
+                <input asp-for="Input.LastName" class="og-input" />
+            </div>
+            <div>
+                <label asp-for="Input.DisplayName" class="og-label"></label>
+                <input asp-for="Input.DisplayName" class="og-input" />
+            </div>
+            <div>
+                <label asp-for="Input.Locale" class="og-label"></label>
+                <input asp-for="Input.Locale" class="og-input" placeholder="pt-BR" />
+            </div>
+            <div>
+                <label asp-for="Input.TimeZone" class="og-label"></label>
+                <input asp-for="Input.TimeZone" class="og-input" placeholder="America/Sao_Paulo" />
+            </div>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2">
+            <label class="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-sm dark:border-gray-700">
+                <input asp-for="Input.IsActive" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                Conta ativa
+            </label>
+            <label class="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-sm dark:border-gray-700">
+                <input asp-for="Input.EmailConfirmed" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                E-mail confirmado
+            </label>
+        </div>
+
+        <div>
+            <h2 class="text-sm font-medium text-gray-700 dark:text-gray-200">Roles</h2>
+            <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach (var role in Model.AvailableRoles)
+                {
+                    <label class="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-sm dark:border-gray-700">
+                        <input type="checkbox" name="Input.SelectedRoles" value="@role" checked="@Model.Input.SelectedRoles.Contains(role, StringComparer.Ordinal)" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                        @role
+                    </label>
+                }
+            </div>
+        </div>
+
+        <div class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+            Alterações de senha continuam fora deste fluxo. Use reset/change password em um slice futuro.
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-3">
+            <a href="/Admin/Users" class="og-btn-ghost">Cancelar</a>
+            <button type="submit" class="og-btn-action">Salvar alterações</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* ── Dark mode: class-based (responds to .dark on <html>) ──────────────────── */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ── OpenGate custom design tokens ─────────────────────────────────────────── */
 @theme {
   --color-primary-50:  #eef2ff;
@@ -65,7 +68,7 @@
     @apply dark:text-gray-300;
   }
 
-  /* Primary button */
+  /* Primary button (full-width, for auth forms) */
   .og-btn-primary {
     @apply flex w-full items-center justify-center rounded-lg px-4 py-2.5;
     @apply bg-primary-600 text-sm font-semibold text-white shadow-xs;
@@ -76,7 +79,27 @@
     transition: background-color 0.15s ease;
   }
 
-  /* Secondary (outline) button */
+  /* Action button (inline, for admin headers & forms — no w-full) */
+  .og-btn-action {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2.5;
+    @apply bg-primary-600 text-sm font-semibold text-white shadow-xs;
+    @apply hover:bg-primary-700 active:bg-primary-700;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply dark:bg-primary-500 dark:hover:bg-primary-600;
+    transition: background-color 0.15s ease;
+  }
+
+  /* Ghost / outline action button */
+  .og-btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-4 py-2.5;
+    @apply bg-white text-sm font-medium text-gray-700 shadow-xs;
+    @apply hover:bg-gray-50 active:bg-gray-100;
+    @apply dark:border-gray-700 dark:bg-transparent dark:text-gray-200 dark:hover:bg-gray-800;
+    transition: background-color 0.15s ease;
+  }
+
+  /* Secondary (outline) button — full-width, for auth forms */
   .og-btn-secondary {
     @apply flex w-full items-center justify-center rounded-lg px-4 py-2.5;
     @apply border border-gray-300 bg-white text-sm font-semibold text-gray-700 shadow-xs;
@@ -104,5 +127,113 @@
     @apply flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700;
     @apply dark:border-red-800 dark:bg-red-950/40 dark:text-red-400;
   }
-}
 
+  /* Table row hover */
+  .og-table-row {
+    @apply transition-colors duration-100;
+    @apply hover:bg-gray-50 dark:hover:bg-gray-800/60;
+  }
+
+  /* Small action button (table cells) */
+  .og-btn-xs {
+    @apply inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors duration-100;
+    @apply border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800;
+  }
+
+  .og-btn-xs-danger {
+    @apply inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors duration-100;
+    @apply border-red-200 text-red-700 hover:bg-red-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10;
+  }
+
+  .og-btn-xs-warn {
+    @apply inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors duration-100;
+    @apply border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-500/30 dark:text-amber-300 dark:hover:bg-amber-500/10;
+  }
+
+  .og-btn-xs-success {
+    @apply inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors duration-100;
+    @apply border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-500/10;
+  }
+
+  /* Icon button (theme toggle etc.) */
+  .og-btn-icon {
+    @apply flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition-colors duration-100;
+    @apply hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white;
+  }
+
+  /* Stat card — with hover lift */
+  .og-stat-card {
+    @apply relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm;
+    @apply dark:border-gray-800 dark:bg-gray-900;
+    @apply transition-all duration-200 hover:shadow-md hover:-translate-y-px;
+  }
+
+  /* Badge variants */
+  .og-badge,
+  .og-badge-green,
+  .og-badge-red,
+  .og-badge-gray,
+  .og-badge-sky,
+  .og-badge-amber {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .og-badge-green {
+    @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300;
+  }
+
+  .og-badge-red {
+    @apply bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300;
+  }
+
+  .og-badge-gray {
+    @apply bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300;
+  }
+
+  .og-badge-sky {
+    @apply bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300;
+  }
+
+  .og-badge-amber {
+    @apply bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300;
+  }
+
+  /* Dark sidebar navigation items (always on dark background) */
+  .og-nav-item {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-400;
+    @apply hover:bg-white/5 hover:text-gray-100;
+    transition: color 0.1s ease, background-color 0.1s ease;
+  }
+
+  .og-nav-item-active {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium;
+    @apply bg-primary-500/10 text-primary-400;
+  }
+
+  /* Page header row (title + actions) */
+  .og-page-header {
+    @apply flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between;
+  }
+
+  /* Search / filter card */
+  .og-search-bar {
+    @apply rounded-2xl border border-gray-200 bg-white p-4 shadow-sm;
+    @apply dark:border-gray-800 dark:bg-gray-900;
+  }
+
+  /* Table wrapper card */
+  .og-table-wrap {
+    @apply overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm;
+    @apply dark:border-gray-800 dark:bg-gray-900;
+  }
+
+  /* Table header cell */
+  .og-th {
+    @apply px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400;
+  }
+
+  /* Table body cell */
+  .og-td {
+    @apply px-5 py-3.5;
+  }
+}

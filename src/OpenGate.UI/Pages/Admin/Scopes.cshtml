@@ -1,0 +1,85 @@
+@page
+@model OpenGate.UI.Pages.Admin.ScopesModel
+@{
+    ViewData["Title"] = "Scopes";
+}
+
+<section class="space-y-6">
+    <div class="og-page-header">
+        <div>
+            <h1 class="text-3xl font-semibold tracking-tight">Scopes</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Escopos OpenID/OAuth disponíveis para os clients.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <p class="text-sm text-gray-500 dark:text-gray-400">@Model.TotalCount resultado(s)</p>
+            @if (Model.CanManageScopes)
+            {
+                <a href="/Admin/Scopes/Create" class="og-btn-action">Novo scope</a>
+            }
+        </div>
+    </div>
+
+    <form method="get" class="og-search-bar">
+        <div class="flex flex-col gap-3 sm:flex-row">
+            <input asp-for="Search" class="og-input" placeholder="Buscar por nome, display name, descrição ou resource" />
+            <button type="submit" class="og-btn-action">Buscar</button>
+        </div>
+    </form>
+
+    <div class="og-table-wrap">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
+                <thead class="bg-gray-50 dark:bg-gray-900/60">
+                    <tr>
+                        <th class="og-th">Scope</th>
+                        <th class="og-th">Descrição</th>
+                        <th class="og-th">Resources</th>
+                        <th class="og-th">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @if (Model.Scopes.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="px-5 py-12 text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-3 h-8 w-8 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Nenhum scope encontrado.</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var scope in Model.Scopes)
+                        {
+                            <tr class="og-table-row">
+                                <td class="og-td">
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">@(scope.DisplayName ?? scope.Name ?? "Scope sem nome")</div>
+                                    <div class="mt-0.5 font-mono text-xs text-gray-400 dark:text-gray-500">@scope.Name</div>
+                                </td>
+                                <td class="og-td text-sm text-gray-600 dark:text-gray-300">@(scope.Description ?? "—")</td>
+                                <td class="og-td text-sm text-gray-500 dark:text-gray-400">@scope.ResourceCount</td>
+                                <td class="og-td">
+                                    @if (Model.CanManageScopes && !string.IsNullOrWhiteSpace(scope.Name))
+                                    {
+                                        <div class="flex items-center gap-2">
+                                            <a href="/Admin/Scopes/Edit/@scope.Name" class="og-btn-xs">Editar</a>
+                                            <form method="post" asp-page-handler="Delete">
+                                                <input type="hidden" name="Search" value="@Model.Search" />
+                                                <input type="hidden" name="name" value="@scope.Name" />
+                                                <button type="submit" class="og-btn-xs-danger">Excluir</button>
+                                            </form>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">Somente leitura</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,103 @@
+@page
+@model OpenGate.UI.Pages.Admin.SessionsModel
+@{
+    ViewData["Title"] = "Sessões";
+}
+
+<section class="space-y-6">
+    <div class="og-page-header">
+        <div>
+            <h1 class="text-3xl font-semibold tracking-tight">Sessões</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Visão operacional das sessões persistidas pelo OpenGate.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <p class="text-sm text-gray-500 dark:text-gray-400">@Model.TotalCount resultado(s)</p>
+            @if (Model.CanManageSessions)
+            {
+                <span class="text-xs text-gray-400 dark:text-gray-500">Admins podem revogar sessões ativas</span>
+            }
+        </div>
+    </div>
+
+    <form method="get" class="og-search-bar">
+        <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center">
+            <input asp-for="Search" class="og-input" placeholder="Buscar por usuário, client, device ou IP" />
+            <label class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
+                <input asp-for="ActiveOnly" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                Somente ativas
+            </label>
+            <button type="submit" class="og-btn-action">Buscar</button>
+        </div>
+    </form>
+
+    <div class="og-table-wrap">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
+                <thead class="bg-gray-50 dark:bg-gray-900/60">
+                    <tr>
+                        <th class="og-th">Sessão</th>
+                        <th class="og-th">Usuário</th>
+                        <th class="og-th">Dispositivo</th>
+                        <th class="og-th">Status</th>
+                        <th class="og-th">Expiração</th>
+                        <th class="og-th">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @if (Model.Sessions.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="px-5 py-12 text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-3 h-8 w-8 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Nenhuma sessão encontrada.</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var session in Model.Sessions)
+                        {
+                            <tr class="og-table-row align-top">
+                                <td class="og-td">
+                                    <div class="font-mono text-xs text-gray-500 dark:text-gray-400">@session.Id.ToString()[..12]…</div>
+                                    <div class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">@(session.ClientId ?? "—")</div>
+                                </td>
+                                <td class="og-td text-sm text-gray-700 dark:text-gray-300">@(session.UserEmail ?? "desconhecido")</td>
+                                <td class="og-td">
+                                    <div class="text-sm text-gray-600 dark:text-gray-300">@(session.DeviceInfo ?? "não identificado")</div>
+                                    <div class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">IP @(session.IpAddress ?? "—")</div>
+                                </td>
+                                <td class="og-td">
+                                    <span class="@(session.IsActive ? "og-badge-green" : "og-badge-gray")">@(session.IsActive ? "Ativa" : "Encerrada")</span>
+                                    @if (session.RevokedAt is not null)
+                                    {
+                                        <div class="mt-1 text-xs text-gray-400 dark:text-gray-500">Revogada @session.RevokedAt.Value.ToLocalTime().ToString("g")</div>
+                                    }
+                                </td>
+                                <td class="og-td">
+                                    <div class="text-sm text-gray-600 dark:text-gray-300">@session.ExpiresAt.ToLocalTime().ToString("g")</div>
+                                    <div class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">Criada @session.CreatedAt.ToLocalTime().ToString("g")</div>
+                                </td>
+                                <td class="og-td">
+                                    @if (Model.CanManageSessions && session.IsActive)
+                                    {
+                                        <form method="post" asp-page-handler="Revoke">
+                                            <input type="hidden" name="Search" value="@Model.Search" />
+                                            <input type="hidden" name="ActiveOnly" value="@Model.ActiveOnly.ToString()" />
+                                            <input type="hidden" name="id" value="@session.Id" />
+                                            <button type="submit" class="og-btn-xs-danger">Revogar</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">—</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

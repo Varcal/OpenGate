@@ -1,0 +1,91 @@
+@page
+@model OpenGate.UI.Pages.Admin.ClientsModel
+@{
+    ViewData["Title"] = "Clients";
+}
+
+<section class="space-y-6">
+    <div class="og-page-header">
+        <div>
+            <h1 class="text-3xl font-semibold tracking-tight">Clients</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Aplicações OpenIddict registradas no servidor.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <p class="text-sm text-gray-500 dark:text-gray-400">@Model.TotalCount resultado(s)</p>
+            @if (Model.CanManageClients)
+            {
+                <a href="/Admin/Clients/Create" class="og-btn-action">Novo client</a>
+            }
+        </div>
+    </div>
+
+    <form method="get" class="og-search-bar">
+        <div class="flex flex-col gap-3 sm:flex-row">
+            <input asp-for="Search" class="og-input" placeholder="Buscar por client_id, nome ou redirect URI" />
+            <button type="submit" class="og-btn-action">Buscar</button>
+        </div>
+    </form>
+
+    <div class="og-table-wrap">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
+                <thead class="bg-gray-50 dark:bg-gray-900/60">
+                    <tr>
+                        <th class="og-th">Client</th>
+                        <th class="og-th">Tipo</th>
+                        <th class="og-th">Consentimento</th>
+                        <th class="og-th">Redirects</th>
+                        <th class="og-th">Permissões</th>
+                        <th class="og-th">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @if (Model.Clients.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="px-5 py-12 text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-3 h-8 w-8 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Nenhum client encontrado.</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var client in Model.Clients)
+                        {
+                            <tr class="og-table-row">
+                                <td class="og-td">
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">@(client.DisplayName ?? client.ClientId ?? "Client sem nome")</div>
+                                    <div class="mt-0.5 font-mono text-xs text-gray-400 dark:text-gray-500">@client.ClientId</div>
+                                </td>
+                                <td class="og-td">
+                                    <span class="og-badge og-badge-gray">@client.ClientType</span>
+                                </td>
+                                <td class="og-td text-sm text-gray-600 dark:text-gray-300">@client.ConsentType</td>
+                                <td class="og-td text-sm text-gray-600 dark:text-gray-300">@client.RedirectUriCount</td>
+                                <td class="og-td text-sm text-gray-500 dark:text-gray-400">@client.PermissionCount perm. · @client.RequirementCount req.</td>
+                                <td class="og-td">
+                                    @if (Model.CanManageClients && !string.IsNullOrWhiteSpace(client.ClientId))
+                                    {
+                                        <div class="flex items-center gap-2">
+                                            <a href="/Admin/Clients/Edit/@client.ClientId" class="og-btn-xs">Editar</a>
+                                            <form method="post" asp-page-handler="Delete">
+                                                <input type="hidden" name="Search" value="@Model.Search" />
+                                                <input type="hidden" name="clientId" value="@client.ClientId" />
+                                                <button type="submit" class="og-btn-xs-danger">Excluir</button>
+                                            </form>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">Somente leitura</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

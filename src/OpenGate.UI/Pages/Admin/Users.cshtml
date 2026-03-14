@@ -1,0 +1,120 @@
+@page
+@model OpenGate.UI.Pages.Admin.UsersModel
+@{
+    ViewData["Title"] = "Usuários";
+}
+
+<section class="space-y-6">
+    <div class="og-page-header">
+        <div>
+            <h1 class="text-3xl font-semibold tracking-tight">Usuários</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Listagem administrativa com perfil, roles e atividade.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <p class="text-sm text-gray-500 dark:text-gray-400">@Model.TotalCount resultado(s)</p>
+            @if (Model.CanManageUsers)
+            {
+                <a href="/Admin/Users/Create" class="og-btn-action">Novo usuário</a>
+            }
+        </div>
+    </div>
+
+    <form method="get" class="og-search-bar">
+        <div class="flex flex-col gap-3 sm:flex-row">
+            <input asp-for="Search" class="og-input" placeholder="Buscar por e-mail, username ou nome" />
+            <button type="submit" class="og-btn-action">Buscar</button>
+        </div>
+    </form>
+
+    <div class="og-table-wrap">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
+                <thead class="bg-gray-50 dark:bg-gray-900/60">
+                    <tr>
+                        <th class="og-th">Usuário</th>
+                        <th class="og-th">Status</th>
+                        <th class="og-th">Roles</th>
+                        <th class="og-th">Sessões</th>
+                        <th class="og-th">Último login</th>
+                        <th class="og-th">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @if (Model.Users.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="px-5 py-12 text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-3 h-8 w-8 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Nenhum usuário encontrado.</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var user in Model.Users)
+                        {
+                            <tr class="og-table-row align-top">
+                                <td class="og-td">
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">@(user.DisplayName ?? user.Email ?? user.UserName ?? user.Id)</div>
+                                    <div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">@user.Email</div>
+                                    <div class="mt-0.5 font-mono text-xs text-gray-400 dark:text-gray-500">@user.UserName</div>
+                                </td>
+                                <td class="og-td">
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <span class="@(user.IsActive ? "og-badge-green" : "og-badge-gray")">@(user.IsActive ? "Ativo" : "Inativo")</span>
+                                        <span class="@(user.EmailConfirmed ? "og-badge-sky" : "og-badge-amber")">@(user.EmailConfirmed ? "E-mail ok" : "Pendente")</span>
+                                    </div>
+                                    <div class="mt-1.5 text-xs text-gray-400 dark:text-gray-500">Criado @user.CreatedAt.ToLocalTime().ToString("g")</div>
+                                </td>
+                                <td class="og-td">
+                                    <div class="flex flex-wrap gap-1.5">
+                                        @if (user.Roles.Count == 0)
+                                        {
+                                            <span class="text-xs text-gray-400 dark:text-gray-500">Sem roles</span>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var role in user.Roles)
+                                            {
+                                                <span class="og-badge bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300">@role</span>
+                                            }
+                                        }
+                                    </div>
+                                </td>
+                                <td class="og-td text-sm text-gray-600 dark:text-gray-300">@user.ActiveSessionCount ativa(s)</td>
+                                <td class="og-td text-sm text-gray-500 dark:text-gray-400">@(user.LastLoginAt?.ToLocalTime().ToString("g") ?? "Nunca")</td>
+                                <td class="og-td">
+                                    @if (Model.CanManageUsers)
+                                    {
+                                        <div class="flex items-center gap-2">
+                                            <a href="/Admin/Users/Edit/@user.Id" class="og-btn-xs">Editar</a>
+                                            @if (user.IsCurrentUser && user.IsActive)
+                                            {
+                                                <span class="text-xs text-gray-400 dark:text-gray-500">Sua conta</span>
+                                            }
+                                            else
+                                            {
+                                                <form method="post" asp-page-handler="ToggleActive">
+                                                    <input type="hidden" name="Search" value="@Model.Search" />
+                                                    <input type="hidden" name="id" value="@user.Id" />
+                                                    <input type="hidden" name="isActive" value="@(!user.IsActive).ToString()" />
+                                                    <button type="submit" class="@(user.IsActive ? "og-btn-xs-warn" : "og-btn-xs-success")">
+                                                        @(user.IsActive ? "Desativar" : "Ativar")
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-gray-400 dark:text-gray-500">Somente leitura</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,52 @@
+@page
+@model OpenGate.UI.Pages.Admin.AuditLogsModel
+@{
+    ViewData["Title"] = "Audit logs";
+}
+
+<section class="space-y-6">
+    <div class="og-page-header">
+        <div>
+            <h1 class="text-3xl font-semibold tracking-tight">Audit logs</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Eventos de segurança e administração mais recentes.</p>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400">@Model.TotalCount resultado(s)</p>
+    </div>
+
+    <form method="get" class="og-search-bar">
+        <div class="flex flex-col gap-3 sm:flex-row">
+            <input asp-for="Search" class="og-input" placeholder="Buscar por event type, usuário, client ou IP" />
+            <button type="submit" class="og-btn-action">Buscar</button>
+        </div>
+    </form>
+
+    <div class="space-y-3">
+        @if (Model.AuditLogs.Count == 0)
+        {
+            <div class="og-table-wrap px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400">Nenhum audit log encontrado.</div>
+        }
+        else
+        {
+            @foreach (var audit in Model.AuditLogs)
+            {
+                <article class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h2 class="font-semibold">@audit.EventType</h2>
+                                <span class="rounded-full px-2.5 py-1 text-xs font-medium @(audit.Succeeded ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300")">@(audit.Succeeded ? "Sucesso" : "Falha")</span>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">@(audit.UserEmail ?? "anônimo") · @(audit.ClientId ?? "sem client") · IP @(audit.IpAddress ?? "—")</p>
+                        </div>
+                        <div class="text-xs text-gray-400 dark:text-gray-500">@audit.OccurredAt.ToLocalTime().ToString("g")</div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(audit.Details))
+                    {
+                        <div class="mt-4 rounded-xl bg-gray-50 px-4 py-3 font-mono text-xs text-gray-600 dark:bg-gray-950 dark:text-gray-300">@audit.Details</div>
+                    }
+                </article>
+            }
+        }
+    </div>
+</section>

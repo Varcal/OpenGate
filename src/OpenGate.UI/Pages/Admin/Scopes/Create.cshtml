@@ -1,0 +1,48 @@
+@page
+@model OpenGate.UI.Pages.Admin.Scopes.CreateModel
+@{
+    ViewData["Title"] = "Novo scope";
+}
+
+<section class="space-y-6">
+    <div class="og-page-header">
+        <div>
+            <h1 class="text-3xl font-semibold tracking-tight">Novo scope</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Registra um novo scope OpenIddict e seus resources.</p>
+        </div>
+        <a href="/Admin/Scopes" class="og-btn-ghost">Voltar</a>
+    </div>
+
+    <form method="post" class="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 dark:text-red-300"></div>
+
+        <div class="grid gap-4">
+            <div>
+                <label asp-for="Input.Name" class="og-label">Name</label>
+                <input asp-for="Input.Name" class="og-input" />
+            </div>
+            <div>
+                <label asp-for="Input.DisplayName" class="og-label">Display name</label>
+                <input asp-for="Input.DisplayName" class="og-input" />
+            </div>
+            <div>
+                <label asp-for="Input.Description" class="og-label">Description</label>
+                <textarea asp-for="Input.Description" rows="3" class="og-input"></textarea>
+            </div>
+            <div>
+                <label asp-for="Input.Resources" class="og-label">Resources</label>
+                <textarea asp-for="Input.Resources" rows="4" class="og-input"></textarea>
+                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Um resource por linha ou separados por vírgula.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-3">
+            <a href="/Admin/Scopes" class="og-btn-ghost">Cancelar</a>
+            <button type="submit" class="og-btn-action">Criar scope</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
