@@ -14,6 +14,9 @@ namespace OpenGate.Server.Extensions;
 /// </summary>
 public static class OpenGateServiceCollectionExtensions
 {
+    private const string AdminApiReadScope = "admin_api";
+    private const string AdminApiWriteScope = "admin_api.write";
+
     /// <summary>
     /// Registers all OpenGate Identity Server services with a fluent builder.
     /// </summary>
@@ -177,7 +180,9 @@ public static class OpenGateServiceCollectionExtensions
             Scopes.Profile,
             Scopes.Roles,
             Scopes.OfflineAccess,
-            options.ApiScopeName);
+            options.ApiScopeName,
+            AdminApiReadScope,
+            AdminApiWriteScope);
 
         // Provide a default principal for client_credentials token requests.
         server.AddEventHandler<OpenIddictServerEvents.HandleTokenRequestContext>(builder =>

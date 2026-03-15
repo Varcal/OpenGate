@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using OpenGate.Admin.Api.Security;
 using OpenGate.Data.EFCore;
 using OpenGate.Sample.Basic;
 using OpenIddict.Abstractions;
@@ -104,6 +105,8 @@ internal sealed class IntegrationSeedService(IServiceProvider services) : IHoste
     internal const string DemoPassword        = "Demo@1234!abcd";
     internal const string MachineClientId     = "machine-demo";
     internal const string MachineClientSecret = "machine-demo-secret-change-in-prod";
+    internal const string AdminClientId       = "admin-cli";
+    internal const string AdminClientSecret   = "admin-cli-secret-change-in-prod";
     internal const string InteractiveClientId = "interactive-demo";
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -154,6 +157,26 @@ internal sealed class IntegrationSeedService(IServiceProvider services) : IHoste
             }, CancellationToken.None);
         }
 
+        if (await scopeMgr.FindByNameAsync(OpenGateAdminScopes.Read, CancellationToken.None) is null)
+        {
+            await scopeMgr.CreateAsync(new OpenIddictScopeDescriptor
+            {
+                Name = OpenGateAdminScopes.Read,
+                DisplayName = "OpenGate Admin API read access",
+                Resources = { "opengate_admin_api" }
+            }, CancellationToken.None);
+        }
+
+        if (await scopeMgr.FindByNameAsync(OpenGateAdminScopes.Write, CancellationToken.None) is null)
+        {
+            await scopeMgr.CreateAsync(new OpenIddictScopeDescriptor
+            {
+                Name = OpenGateAdminScopes.Write,
+                DisplayName = "OpenGate Admin API write access",
+                Resources = { "opengate_admin_api" }
+            }, CancellationToken.None);
+        }
+
         // ── Machine client — Client Credentials ───────────────────────────────
         if (await appMgr.FindByClientIdAsync(MachineClientId, CancellationToken.None) is null)
         {
@@ -168,6 +191,24 @@ internal sealed class IntegrationSeedService(IServiceProvider services) : IHoste
                     Permissions.Endpoints.Token,
                     Permissions.GrantTypes.ClientCredentials,
                     $"{Permissions.Prefixes.Scope}api"
+                }
+            }, CancellationToken.None);
+        }
+
+        if (await appMgr.FindByClientIdAsync(AdminClientId, CancellationToken.None) is null)
+        {
+            await appMgr.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId = AdminClientId,
+                ClientSecret = AdminClientSecret,
+                ClientType = ClientTypes.Confidential,
+                ConsentType = ConsentTypes.Implicit,
+                Permissions =
+                {
+                    Permissions.Endpoints.Token,
+                    Permissions.GrantTypes.ClientCredentials,
+                    $"{Permissions.Prefixes.Scope}{OpenGateAdminScopes.Read}",
+                    $"{Permissions.Prefixes.Scope}{OpenGateAdminScopes.Write}"
                 }
             }, CancellationToken.None);
         }

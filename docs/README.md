@@ -7,6 +7,7 @@
 1. [Criar e rodar um servidor com `dotnet new opengate-server`](quickstarts/01-criar-e-rodar.md)
 2. [Authorization Code + PKCE (Postman)](quickstarts/02-auth-code-pkce.md)
 3. [Client Credentials (curl)](quickstarts/03-client-credentials.md)
+4. [Admin API Headless](quickstarts/04-admin-api-headless.md)
 
 ### Referência
 

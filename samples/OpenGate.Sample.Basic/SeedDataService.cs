@@ -126,6 +126,26 @@ public sealed partial class SeedDataService(
             }, ct);
         }
 
+        if (await scopeMgr.FindByNameAsync(OpenGateAdminScopes.Read, ct) is null)
+        {
+            await scopeMgr.CreateAsync(new OpenIddictScopeDescriptor
+            {
+                Name = OpenGateAdminScopes.Read,
+                DisplayName = "OpenGate Admin API read access",
+                Resources = { "opengate_admin_api" }
+            }, ct);
+        }
+
+        if (await scopeMgr.FindByNameAsync(OpenGateAdminScopes.Write, ct) is null)
+        {
+            await scopeMgr.CreateAsync(new OpenIddictScopeDescriptor
+            {
+                Name = OpenGateAdminScopes.Write,
+                DisplayName = "OpenGate Admin API write access",
+                Resources = { "opengate_admin_api" }
+            }, ct);
+        }
+
         // ── Interactive (Authorization Code + PKCE) ───────────────────────────
         if (await mgr.FindByClientIdAsync("interactive-demo", ct) is null)
         {
@@ -179,6 +199,27 @@ public sealed partial class SeedDataService(
             }, ct);
 
             Log.ClientCreated(logger, "machine-demo");
+        }
+
+        if (await mgr.FindByClientIdAsync("admin-cli", ct) is null)
+        {
+            await mgr.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId = "admin-cli",
+                ClientSecret = "admin-cli-secret-change-in-prod",
+                DisplayName = "Admin CLI (Headless Admin API)",
+                ClientType = ClientTypes.Confidential,
+                ConsentType = ConsentTypes.Implicit,
+                Permissions =
+                {
+                    Permissions.Endpoints.Token,
+                    Permissions.GrantTypes.ClientCredentials,
+                    $"{Permissions.Prefixes.Scope}{OpenGateAdminScopes.Read}",
+                    $"{Permissions.Prefixes.Scope}{OpenGateAdminScopes.Write}"
+                }
+            }, ct);
+
+            Log.ClientCreated(logger, "admin-cli");
         }
     }
 

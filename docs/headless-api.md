@@ -1,6 +1,6 @@
 ## Uso via API sem UI
 
-Este guia esclarece o que o OpenGate já suporta hoje em cenários sem interface gráfica.
+Este guia descreve como usar o OpenGate sem interface gráfica, tanto para os endpoints OAuth/OIDC quanto para a Admin API.
 
 ### Resposta curta
 
@@ -16,6 +16,7 @@ Referências:
 
 - [API Reference](api-reference.md)
 - [Quickstart 3 - Client Credentials (curl)](quickstarts/03-client-credentials.md)
+- [Quickstart 4 - Admin API Headless](quickstarts/04-admin-api-headless.md)
 
 ### O que funciona sem UI
 
@@ -37,7 +38,7 @@ curl -s -X POST http://localhost:5148/connect/token \
 
 O retorno esperado contém `access_token`, `token_type` e `expires_in`.
 
-### Admin API
+### Admin API sem UI
 
 O projeto também expõe uma Admin API REST em `/admin/api`, com endpoints para:
 
@@ -50,89 +51,101 @@ O projeto também expõe uma Admin API REST em `/admin/api`, com endpoints para:
 
 Isso permite administrar o OpenGate por HTTP em vez de usar a Admin UI.
 
-### Limitação atual da autenticação da Admin API
+### Autenticação da Admin API
 
-Embora a superfície administrativa seja REST, a autenticação padrão atual da Admin API ainda depende do login web/cookie do servidor.
+O OpenGate agora suporta dois modos de autenticação para a superfície administrativa:
+
+- sessão web/cookie para uso humano via `/admin`
+- bearer token para automação headless via `/admin/api`
+
+Importante: isso não significa que existam duas identidades ou dois "logins" distintos. A diferença é apenas o mecanismo de apresentação das credenciais.
+
+- interface web: autenticação por cookie
+- automação: autenticação por bearer token
+
+Nos dois casos, o modelo de autorização continua baseado nas mesmas roles e políticas administrativas.
+
+### Comportamento sem credenciais
+
+Como a Admin API é uma superfície REST, chamadas anônimas para `/admin/api/*` retornam `401 Unauthorized`.
+
+Já as páginas da Admin UI continuam usando o comportamento web normal, com redirect para login quando necessário.
+
+### Scopes administrativos
+
+Para acesso headless, o OpenGate define os seguintes scopes:
+
+- `admin_api`: leitura administrativa
+- `admin_api.write`: escrita administrativa
 
 Na prática:
 
-- uma chamada anônima para `/admin/api/me` redireciona para `/Account/Login`
-- o acesso administrativo "out of the box" ainda usa a UI de login para estabelecer a sessão
+- tokens com `admin_api` podem consultar endpoints administrativos
+- tokens com `admin_api.write` podem executar operações de escrita
+- operações de escrita também aceitam `admin_api.write` como superset do acesso de leitura
 
-Isso significa que hoje há dois cenários distintos:
+### Client headless de exemplo
 
-1. Uso dos endpoints OAuth/OIDC sem UI: suportado.
-2. Automação administrativa 100% headless sem sessão web prévia: ainda não está pronta por padrão.
+No sample principal (`samples/OpenGate.Sample.Basic`), o seeding cria um client confidencial para automação administrativa:
 
-### Quando a UI ainda é necessária
+- `client_id`: `admin-cli`
+- `client_secret`: `admin-cli-secret-change-in-prod`
 
-A UI continua sendo a opção padrão para:
+Esse client pode solicitar tokens com `client_credentials` para consumir a Admin API sem UI.
 
-- login interativo de usuários
+As operações administrativas headless também são auditadas com contexto adicional de autenticação e requisição, facilitando distinguir chamadas via cookie e chamadas via bearer token.
+
+### Exemplo: obter token de leitura administrativa
+
+```bash
+curl -s -X POST http://localhost:5148/connect/token \
+  -H "content-type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&client_id=admin-cli&client_secret=admin-cli-secret-change-in-prod&scope=admin_api"
+```
+
+### Exemplo: listar clients via Admin API
+
+```bash
+curl -s http://localhost:5148/admin/api/clients \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### Exemplo: obter token de escrita administrativa
+
+```bash
+curl -s -X POST http://localhost:5148/connect/token \
+  -H "content-type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&client_id=admin-cli&client_secret=admin-cli-secret-change-in-prod&scope=admin_api.write"
+```
+
+### Exemplo: criar scope via Admin API
+
+```bash
+curl -s -X POST http://localhost:5148/admin/api/scopes \
+  -H "Authorization: Bearer <access_token>" \
+  -H "content-type: application/json" \
+  -d "{\"name\":\"orders-api\",\"displayName\":\"Orders API\",\"description\":\"Orders scope\",\"resources\":[\"resource_server\",\"orders_api\"]}"
+```
+
+### Quando usar UI e quando usar API
+
+Use a UI quando quiser:
+
+- login interativo
 - consentimento
-- estabelecimento da sessão administrativa usada pela Admin API no estado atual
+- operação manual por administradores humanos
 
-Se o seu cenário exigir administração totalmente headless, o caminho é expor ou adicionar um mecanismo de autenticação não interativo para a Admin API.
+Use a API quando quiser:
 
-Exemplos possíveis:
-
-- bearer token para administradores
-- client credentials com escopos administrativos
-- autenticação mútua entre serviços
-- API keys internas protegidas por gateway
+- automação operacional
+- scripts de provisionamento
+- integrações CI/CD
+- administração remota sem browser
 
 ### Resumo prático
 
-Use sem UI quando quiser:
+Hoje o OpenGate suporta:
 
-- emitir tokens
-- integrar serviços
-- consumir discovery e endpoints OIDC
-- operar clientes OAuth via HTTP
-
-Considere a UI ou uma extensão de autenticação quando quiser:
-
-- administrar o ambiente sem sessão web
-- fazer automação operacional da Admin API sem login humano
-
-### Como habilitar Admin API headless no produto
-
-Se o objetivo do produto for suportar administração totalmente sem UI, a direção mais consistente é adicionar autenticação por bearer token na Admin API, mantendo cookies para a experiência web existente.
-
-Abordagem recomendada:
-
-- manter a UI e o login por cookie para administradores humanos
-- adicionar um esquema `Bearer` para chamadas de automação
-- proteger `/admin/api` com políticas que aceitem claims ou scopes administrativos
-- continuar exigindo roles administrativas como `Admin` e `SuperAdmin`
-
-Desenho sugerido:
-
-1. Registrar autenticação bearer além do cookie atual.
-2. Validar tokens emitidos pelo próprio OpenGate para consumo interno da Admin API.
-3. Definir scopes administrativos explícitos, por exemplo `admin_api`.
-4. Exigir combinação de scope e role para operações críticas.
-5. Permitir `client_credentials` apenas para clients marcados como automação administrativa.
-6. Auditar todas as chamadas headless com `client_id`, subject, IP e operação.
-
-Resultado esperado:
-
-- humano usando `/admin` continua autenticando por login web
-- automação usa `Authorization: Bearer <token>` contra `/admin/api`
-- a superfície REST deixa de depender de redirecionamento para `/Account/Login`
-
-Cuidados de segurança:
-
-- não reutilizar indiscriminadamente qualquer access token da plataforma para a Admin API
-- separar scopes administrativos dos scopes de negócio
-- restringir emissão a clients confidenciais
-- aplicar expiração curta e rotação de segredo
-- registrar audit trail completo para create, update, delete, import e revoke
-
-Impacto técnico provável no código atual:
-
-- `OpenGate.Server` hoje define cookie como esquema padrão de autenticação
-- a Admin API hoje usa `RequireAuthorization(...)`, então a evolução natural é adicionar policies compatíveis com bearer token
-- o sample [samples/OpenGate.Sample.ProtectedApi](../samples/OpenGate.Sample.ProtectedApi/README.md) já mostra o padrão de consumo com `JwtBearer` em uma API protegida
-
-Em outras palavras, a lacuna principal não é a ausência de endpoints REST, e sim a falta de um mecanismo nativo de autenticação não interativa para a superfície administrativa.
+1. uso sem UI para os endpoints OAuth/OIDC
+2. uso sem UI para a Admin API com bearer token e scopes administrativos
+3. uso web tradicional para administradores humanos via cookie e Admin UI

@@ -1,7 +1,9 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using OpenGate.Admin.Api.Security;
 
 namespace OpenGate.Server.Tests.Integration;
 
@@ -9,14 +11,15 @@ public sealed class AdminApiTests(OpenGateWebFactory factory)
     : IClassFixture<OpenGateWebFactory>
 {
     private readonly HttpClient _client = factory.CreateClient(new() { AllowAutoRedirect = false });
+    private static readonly string[] value = new[] { "opengate_admin_api" };
+    private static readonly string[] valueArray = new[] { "opengate_admin_api" };
 
     [Fact]
-    public async Task AdminApi_Unauthenticated_Redirects_To_Login()
+    public async Task AdminApi_Unauthenticated_Returns_Unauthorized()
     {
         var response = await _client.GetAsync("/admin/api/me");
 
-        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Contains("/Account/Login", response.Headers.Location?.ToString() ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
@@ -33,6 +36,7 @@ public sealed class AdminApiTests(OpenGateWebFactory factory)
         Assert.Contains(
             json.RootElement.GetProperty("roles").EnumerateArray().Select(x => x.GetString()),
             role => string.Equals(role, "SuperAdmin", StringComparison.Ordinal));
+        Assert.Equal("user", json.RootElement.GetProperty("kind").GetString());
     }
 
     [Fact]
@@ -49,6 +53,71 @@ public sealed class AdminApiTests(OpenGateWebFactory factory)
         var items = json.RootElement.GetProperty("items").EnumerateArray().ToList();
         Assert.Contains(items, item =>
             string.Equals(item.GetProperty("email").GetString(), IntegrationSeedService.DemoEmail, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task AdminApi_BearerReadToken_Can_List_Administrative_Data()
+    {
+        using var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            await RequestAdminTokenAsync(OpenGateAdminScopes.Read));
+
+        var meResponse = await client.GetAsync("/admin/api/me");
+        var meJson = await meResponse.Content.ReadFromJsonAsync<JsonDocument>();
+        Assert.Equal(HttpStatusCode.OK, meResponse.StatusCode);
+        Assert.NotNull(meJson);
+        Assert.Equal("client", meJson.RootElement.GetProperty("kind").GetString());
+        Assert.Equal(IntegrationSeedService.AdminClientId, meJson.RootElement.GetProperty("clientId").GetString());
+        Assert.Contains(
+            meJson.RootElement.GetProperty("scopes").EnumerateArray().Select(item => item.GetString()),
+            scope => scope == OpenGateAdminScopes.Read);
+
+        var clientsResponse = await client.GetAsync("/admin/api/clients");
+        var clientsJson = await clientsResponse.Content.ReadFromJsonAsync<JsonDocument>();
+        Assert.Equal(HttpStatusCode.OK, clientsResponse.StatusCode);
+        Assert.NotNull(clientsJson);
+        Assert.True(clientsJson.RootElement.GetProperty("count").GetInt32() >= 1);
+    }
+
+    [Fact]
+    public async Task AdminApi_BearerReadToken_Cannot_Modify_Data()
+    {
+        using var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            await RequestAdminTokenAsync(OpenGateAdminScopes.Read));
+
+        var response = await client.PostAsJsonAsync("/admin/api/scopes", new
+        {
+            name = "forbidden-scope",
+            displayName = "Forbidden Scope",
+            resources = value
+        });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AdminApi_BearerWriteToken_Can_Create_And_Delete_Scope()
+    {
+        using var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            await RequestAdminTokenAsync(OpenGateAdminScopes.Write));
+
+        var createResponse = await client.PostAsJsonAsync("/admin/api/scopes", new
+        {
+            name = "headless-admin-scope",
+            displayName = "Headless Admin Scope",
+            description = "Created through bearer token automation",
+            resources = valueArray
+        });
+
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+
+        var deleteResponse = await client.DeleteAsync("/admin/api/scopes/headless-admin-scope");
+        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
     }
 
     [Fact]
@@ -101,6 +170,26 @@ public sealed class AdminApiTests(OpenGateWebFactory factory)
         }));
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+    }
+
+    private async Task<string> RequestAdminTokenAsync(string scope)
+    {
+        using var tokenClient = factory.CreateClient(new() { AllowAutoRedirect = false });
+
+        var response = await tokenClient.PostAsync("/connect/token", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "client_credentials",
+            ["client_id"] = IntegrationSeedService.AdminClientId,
+            ["client_secret"] = IntegrationSeedService.AdminClientSecret,
+            ["scope"] = scope
+        }));
+
+        var json = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(json);
+
+        return json.RootElement.GetProperty("access_token").GetString()
+            ?? throw new InvalidOperationException("The token response did not contain an access token.");
     }
 
     private static string ExtractInputValue(string html, string inputName)

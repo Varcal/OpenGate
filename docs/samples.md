@@ -3,8 +3,9 @@
 ### 1) OpenGate.Sample.Basic
 
 - Caminho: `samples/OpenGate.Sample.Basic`
-- O que mostra: servidor OpenGate completo (UI + seeding + endpoints OIDC)
+- O que mostra: servidor OpenGate completo (UI + seeding + endpoints OIDC + Admin API headless)
 - Rodar: `dotnet run --project samples/OpenGate.Sample.Basic`
+- Inclui client seedado para automação administrativa: `admin-cli`
 
 ### 2) OpenGate.Sample.ProtectedApi
 

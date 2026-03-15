@@ -21,6 +21,7 @@ namespace OpenGate.Admin.Api.Extensions;
 /// </summary>
 public static class OpenGateAdminApiExtensions
 {
+    private const string ValidationAuthenticationScheme = "OpenIddict.Validation.AspNetCore";
     private static readonly string[] Features =
     [
         "me",
@@ -53,6 +54,28 @@ public static class OpenGateAdminApiExtensions
                 .RequireRole(OpenGateAdminRoles.Admin, OpenGateAdminRoles.SuperAdmin))
             .AddPolicy(OpenGateAdminPolicies.SuperAdmin, policy => policy
                 .RequireAuthenticatedUser()
+                .RequireRole(OpenGateAdminRoles.SuperAdmin))
+            .AddPolicy(OpenGateAdminPolicies.ApiViewer, policy => policy
+                .AddAuthenticationSchemes(
+                    IdentityConstants.ApplicationScheme,
+                    ValidationAuthenticationScheme)
+                .RequireAuthenticatedUser()
+                .RequireAssertion(context =>
+                    HasAdministrativeRole(context.User, OpenGateAdminRoles.Viewer, OpenGateAdminRoles.Admin, OpenGateAdminRoles.SuperAdmin)
+                    || HasAdministrativeScope(context.User, OpenGateAdminScopes.Read, OpenGateAdminScopes.Write)))
+            .AddPolicy(OpenGateAdminPolicies.ApiAdmin, policy => policy
+                .AddAuthenticationSchemes(
+                    IdentityConstants.ApplicationScheme,
+                    ValidationAuthenticationScheme)
+                .RequireAuthenticatedUser()
+                .RequireAssertion(context =>
+                    HasAdministrativeRole(context.User, OpenGateAdminRoles.Admin, OpenGateAdminRoles.SuperAdmin)
+                    || HasAdministrativeScope(context.User, OpenGateAdminScopes.Write)))
+            .AddPolicy(OpenGateAdminPolicies.ApiSuperAdmin, policy => policy
+                .AddAuthenticationSchemes(
+                    IdentityConstants.ApplicationScheme,
+                    ValidationAuthenticationScheme)
+                .RequireAuthenticatedUser()
                 .RequireRole(OpenGateAdminRoles.SuperAdmin));
 
         return services;
@@ -64,7 +87,7 @@ public static class OpenGateAdminApiExtensions
 
         var group = endpoints.MapGroup("/admin/api")
             .WithTags("OpenGate Admin")
-            .RequireAuthorization(OpenGateAdminPolicies.Viewer);
+            .RequireAuthorization(OpenGateAdminPolicies.ApiViewer);
 
         DescribeOk(
             group.MapGet("/", () => TypedResults.Ok(new
@@ -98,21 +121,21 @@ public static class OpenGateAdminApiExtensions
 
         DescribeCreated(
             group.MapPost("/clients", CreateClientAsync)
-                .RequireAuthorization(OpenGateAdminPolicies.Admin),
+                .RequireAuthorization(OpenGateAdminPolicies.ApiAdmin),
             "OpenGateAdmin_CreateClient",
             "Create client",
             "Creates a new OpenIddict client for interactive or machine-to-machine flows.");
 
         DescribeUpdated(
             group.MapPut("/clients/{clientId}", UpdateClientAsync)
-                .RequireAuthorization(OpenGateAdminPolicies.Admin),
+                .RequireAuthorization(OpenGateAdminPolicies.ApiAdmin),
             "OpenGateAdmin_UpdateClient",
             "Update client",
             "Updates mutable settings of an existing OpenIddict client.");
 
         DescribeDeleted(
             group.MapDelete("/clients/{clientId}", DeleteClientAsync)
-                .RequireAuthorization(OpenGateAdminPolicies.Admin),
+                .RequireAuthorization(OpenGateAdminPolicies.ApiAdmin),
             "OpenGateAdmin_DeleteClient",
             "Delete client",
             "Deletes an OpenIddict client from the administration surface.");
@@ -132,21 +155,21 @@ public static class OpenGateAdminApiExtensions
 
         DescribeCreated(
             group.MapPost("/scopes", CreateScopeAsync)
-                .RequireAuthorization(OpenGateAdminPolicies.Admin),
+                .RequireAuthorization(OpenGateAdminPolicies.ApiAdmin),
             "OpenGateAdmin_CreateScope",
             "Create scope",
             "Creates a new OpenIddict scope and associates resources.");
 
         DescribeUpdated(
             group.MapPut("/scopes/{name}", UpdateScopeAsync)
-                .RequireAuthorization(OpenGateAdminPolicies.Admin),
+                .RequireAuthorization(OpenGateAdminPolicies.ApiAdmin),
             "OpenGateAdmin_UpdateScope",
             "Update scope",
             "Updates an existing OpenIddict scope.");
 
         DescribeDeleted(
             group.MapDelete("/scopes/{name}", DeleteScopeAsync)
-                .RequireAuthorization(OpenGateAdminPolicies.Admin),
+                .RequireAuthorization(OpenGateAdminPolicies.ApiAdmin),
             "OpenGateAdmin_DeleteScope",
             "Delete scope",
             "Deletes an OpenIddict scope from the administration surface.");
@@ -159,7 +182,7 @@ public static class OpenGateAdminApiExtensions
 
         DescribeAction(
             group.MapPost("/configuration/import", ImportConfigurationAsync)
-                .RequireAuthorization(OpenGateAdminPolicies.Admin)
+                .RequireAuthorization(OpenGateAdminPolicies.ApiAdmin)
                 .Produces(StatusCodes.Status400BadRequest),
             "OpenGateAdmin_ImportConfiguration",
             "Import configuration",
@@ -186,28 +209,28 @@ public static class OpenGateAdminApiExtensions
 
         DescribeCreated(
             group.MapPost("/users", CreateUserAsync)
-                .RequireAuthorization(OpenGateAdminPolicies.Admin),
+                .RequireAuthorization(OpenGateAdminPolicies.ApiAdmin),
             "OpenGateAdmin_CreateUser",
             "Create user",
             "Creates a new user and optionally assigns administrative roles.");
 
         DescribeUpdated(
             group.MapPut("/users/{id}", UpdateUserAsync)
-                .RequireAuthorization(OpenGateAdminPolicies.Admin),
+                .RequireAuthorization(OpenGateAdminPolicies.ApiAdmin),
             "OpenGateAdmin_UpdateUser",
             "Update user",
             "Updates user profile data, activation state and optional role assignments.");
 
         DescribeUpdated(
             group.MapPut("/users/{id}/roles", SetUserRolesAsync)
-                .RequireAuthorization(OpenGateAdminPolicies.Admin),
+                .RequireAuthorization(OpenGateAdminPolicies.ApiAdmin),
             "OpenGateAdmin_SetUserRoles",
             "Replace user roles",
             "Replaces the full set of roles assigned to a user.");
 
         DescribeDeleted(
             group.MapDelete("/users/{id}", DeleteUserAsync)
-                .RequireAuthorization(OpenGateAdminPolicies.Admin),
+                .RequireAuthorization(OpenGateAdminPolicies.ApiAdmin),
             "OpenGateAdmin_DeleteUser",
             "Delete user",
             "Deletes a user account from the administration surface.");
@@ -226,7 +249,7 @@ public static class OpenGateAdminApiExtensions
 
         DescribeAction(
             group.MapPost("/sessions/{id:guid}/revoke", RevokeSessionAsync)
-                .RequireAuthorization(OpenGateAdminPolicies.Admin),
+                .RequireAuthorization(OpenGateAdminPolicies.ApiAdmin),
             "OpenGateAdmin_RevokeSession",
             "Revoke session",
             "Revokes an active user session and records an audit event.");
@@ -239,25 +262,41 @@ public static class OpenGateAdminApiExtensions
         UserManager<OpenGateUser> userManager)
     {
         var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userId))
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            var user = await userManager.FindByIdAsync(userId);
+            if (user is null)
+            {
+                return TypedResults.NotFound();
+            }
+
+            var roles = await userManager.GetRolesAsync(user);
+
+            return TypedResults.Ok(new
+            {
+                kind = "user",
+                user.Id,
+                user.Email,
+                user.UserName,
+                roles
+            });
+        }
+
+        var clientId = principal.GetClaim(Claims.ClientId)
+            ?? principal.FindFirstValue(Claims.Subject)
+            ?? principal.Identity?.Name;
+
+        if (string.IsNullOrWhiteSpace(clientId))
         {
             return TypedResults.Unauthorized();
         }
 
-        var user = await userManager.FindByIdAsync(userId);
-        if (user is null)
-        {
-            return TypedResults.NotFound();
-        }
-
-        var roles = await userManager.GetRolesAsync(user);
-
         return TypedResults.Ok(new
         {
-            user.Id,
-            user.Email,
-            user.UserName,
-            roles
+            kind = "client",
+            clientId,
+            scopes = principal.GetScopes().OrderBy(scope => scope, StringComparer.Ordinal).ToArray(),
+            roles = Array.Empty<string>()
         });
     }
 
@@ -309,6 +348,7 @@ public static class OpenGateAdminApiExtensions
 
     private static async Task<IResult> CreateClientAsync(
         AdminClientRequest request,
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         IOpenIddictApplicationManager applicationManager,
         OpenGateDbContext db,
@@ -332,6 +372,7 @@ public static class OpenGateAdminApiExtensions
         }
 
         await WriteAuditLogAsync(
+            httpContext,
             principal,
             db,
             eventType: "Admin.ClientCreated",
@@ -345,6 +386,7 @@ public static class OpenGateAdminApiExtensions
     private static async Task<IResult> UpdateClientAsync(
         string clientId,
         AdminClientRequest request,
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         IOpenIddictApplicationManager applicationManager,
         OpenGateDbContext db,
@@ -368,6 +410,7 @@ public static class OpenGateAdminApiExtensions
 
         await applicationManager.UpdateAsync(application, descriptor, cancellationToken);
         await WriteAuditLogAsync(
+            httpContext,
             principal,
             db,
             eventType: "Admin.ClientUpdated",
@@ -379,6 +422,7 @@ public static class OpenGateAdminApiExtensions
 
     private static async Task<IResult> DeleteClientAsync(
         string clientId,
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         IOpenIddictApplicationManager applicationManager,
         OpenGateDbContext db,
@@ -397,6 +441,7 @@ public static class OpenGateAdminApiExtensions
             cancellationToken);
 
         await WriteAuditLogAsync(
+            httpContext,
             principal,
             db,
             eventType: "Admin.ClientDeleted",
@@ -454,6 +499,7 @@ public static class OpenGateAdminApiExtensions
 
     private static async Task<IResult> CreateScopeAsync(
         AdminScopeRequest request,
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         IOpenIddictScopeManager scopeManager,
         OpenGateDbContext db,
@@ -477,6 +523,7 @@ public static class OpenGateAdminApiExtensions
         }
 
         await WriteAuditLogAsync(
+            httpContext,
             principal,
             db,
             eventType: "Admin.ScopeCreated",
@@ -490,6 +537,7 @@ public static class OpenGateAdminApiExtensions
     private static async Task<IResult> UpdateScopeAsync(
         string name,
         AdminScopeRequest request,
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         IOpenIddictScopeManager scopeManager,
         OpenGateDbContext db,
@@ -513,6 +561,7 @@ public static class OpenGateAdminApiExtensions
 
         await scopeManager.UpdateAsync(scope, descriptor, cancellationToken);
         await WriteAuditLogAsync(
+            httpContext,
             principal,
             db,
             eventType: "Admin.ScopeUpdated",
@@ -524,6 +573,7 @@ public static class OpenGateAdminApiExtensions
 
     private static async Task<IResult> DeleteScopeAsync(
         string name,
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         IOpenIddictScopeManager scopeManager,
         OpenGateDbContext db,
@@ -542,6 +592,7 @@ public static class OpenGateAdminApiExtensions
             cancellationToken);
 
         await WriteAuditLogAsync(
+            httpContext,
             principal,
             db,
             eventType: "Admin.ScopeDeleted",
@@ -552,6 +603,7 @@ public static class OpenGateAdminApiExtensions
     }
 
     private static async Task<IResult> ExportConfigurationAsync(
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         IOpenIddictApplicationManager applicationManager,
         IOpenIddictScopeManager scopeManager,
@@ -585,6 +637,7 @@ public static class OpenGateAdminApiExtensions
         };
 
         await WriteAuditLogAsync(
+            httpContext,
             principal,
             db,
             eventType: "Admin.ConfigurationExported",
@@ -596,6 +649,7 @@ public static class OpenGateAdminApiExtensions
 
     private static async Task<IResult> ImportConfigurationAsync(
         AdminConfigurationDocument document,
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         IOpenIddictApplicationManager applicationManager,
         IOpenIddictScopeManager scopeManager,
@@ -660,6 +714,7 @@ public static class OpenGateAdminApiExtensions
         };
 
         await WriteAuditLogAsync(
+            httpContext,
             principal,
             db,
             eventType: "Admin.ConfigurationImported",
@@ -791,6 +846,7 @@ public static class OpenGateAdminApiExtensions
 
     private static async Task<IResult> CreateUserAsync(
         AdminUserRequest request,
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         UserManager<OpenGateUser> userManager,
         RoleManager<IdentityRole> roleManager,
@@ -836,6 +892,7 @@ public static class OpenGateAdminApiExtensions
         }
 
         await WriteAuditLogAsync(
+            httpContext,
             principal,
             db,
             eventType: "Admin.UserCreated",
@@ -849,6 +906,7 @@ public static class OpenGateAdminApiExtensions
     private static async Task<IResult> UpdateUserAsync(
         string id,
         AdminUserRequest request,
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         UserManager<OpenGateUser> userManager,
         RoleManager<IdentityRole> roleManager,
@@ -921,6 +979,7 @@ public static class OpenGateAdminApiExtensions
         }
 
         await WriteAuditLogAsync(
+            httpContext,
             principal,
             db,
             eventType: "Admin.UserUpdated",
@@ -934,6 +993,7 @@ public static class OpenGateAdminApiExtensions
     private static async Task<IResult> SetUserRolesAsync(
         string id,
         AdminUserRolesRequest request,
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         UserManager<OpenGateUser> userManager,
         RoleManager<IdentityRole> roleManager,
@@ -959,6 +1019,7 @@ public static class OpenGateAdminApiExtensions
         }
 
         await WriteAuditLogAsync(
+            httpContext,
             principal,
             db,
             eventType: "Admin.UserRolesUpdated",
@@ -971,6 +1032,7 @@ public static class OpenGateAdminApiExtensions
 
     private static async Task<IResult> DeleteUserAsync(
         string id,
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         UserManager<OpenGateUser> userManager,
         OpenGateDbContext db,
@@ -1001,6 +1063,7 @@ public static class OpenGateAdminApiExtensions
         }
 
         await WriteAuditLogAsync(
+            httpContext,
             principal,
             db,
             eventType: "Admin.UserDeleted",
@@ -1103,6 +1166,7 @@ public static class OpenGateAdminApiExtensions
 
     private static async Task<IResult> RevokeSessionAsync(
         Guid id,
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         OpenGateDbContext db,
         CancellationToken cancellationToken)
@@ -1116,17 +1180,13 @@ public static class OpenGateAdminApiExtensions
         if (session.RevokedAt is null)
         {
             session.RevokedAt = DateTimeOffset.UtcNow;
-            db.AuditLogs.Add(new AuditLog
-            {
-                UserId = principal.FindFirstValue(ClaimTypes.NameIdentifier),
-                EventType = "Admin.SessionRevoked",
-                ClientId = session.ClientId,
-                Succeeded = true,
-                Details = $"{{\"sessionId\":\"{session.Id}\",\"targetUserId\":\"{session.UserId}\"}}",
-                OccurredAt = DateTimeOffset.UtcNow
-            });
-
-            await db.SaveChangesAsync(cancellationToken);
+            await WriteAuditLogAsync(
+                httpContext,
+                principal,
+                db,
+                eventType: "Admin.SessionRevoked",
+                details: new { sessionId = session.Id, targetUserId = session.UserId, targetClientId = session.ClientId },
+                cancellationToken);
         }
 
         return TypedResults.Ok(new
@@ -1684,18 +1744,30 @@ public static class OpenGateAdminApiExtensions
     }
 
     private static async Task WriteAuditLogAsync(
+        HttpContext httpContext,
         ClaimsPrincipal principal,
         OpenGateDbContext db,
         string eventType,
         object details,
         CancellationToken cancellationToken)
     {
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        var clientId = principal.GetClaim(Claims.ClientId);
+
+        if (string.IsNullOrWhiteSpace(clientId) && string.IsNullOrWhiteSpace(userId))
+        {
+            clientId = principal.FindFirstValue(Claims.Subject) ?? principal.Identity?.Name;
+        }
+
         db.AuditLogs.Add(new AuditLog
         {
-            UserId = principal.FindFirstValue(ClaimTypes.NameIdentifier),
+            UserId = userId,
+            ClientId = clientId,
+            IpAddress = httpContext.Connection.RemoteIpAddress?.ToString(),
+            UserAgent = httpContext.Request.Headers.UserAgent.ToString(),
             EventType = eventType,
             Succeeded = true,
-            Details = JsonSerializer.Serialize(details),
+            Details = JsonSerializer.Serialize(BuildAuditDetails(httpContext, principal, userId, clientId, details)),
             OccurredAt = DateTimeOffset.UtcNow
         });
 
@@ -1726,6 +1798,44 @@ public static class OpenGateAdminApiExtensions
             .Select(value => value.Trim())
             .Distinct(StringComparer.Ordinal)
             .ToArray();
+
+    private static bool HasAdministrativeRole(ClaimsPrincipal principal, params string[] roles)
+        => roles.Any(principal.IsInRole);
+
+    private static bool HasAdministrativeScope(ClaimsPrincipal principal, params string[] scopes)
+        => scopes.Any(principal.HasScope);
+
+    private static object BuildAuditDetails(
+        HttpContext httpContext,
+        ClaimsPrincipal principal,
+        string? userId,
+        string? clientId,
+        object payload)
+        => new
+        {
+            actor = new
+            {
+                authenticationMode = string.IsNullOrWhiteSpace(userId) ? "bearer" : "cookie",
+                userId,
+                clientId,
+                roles = principal.Claims
+                    .Where(claim => claim.Type == ClaimTypes.Role)
+                    .Select(claim => claim.Value)
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(value => value, StringComparer.Ordinal)
+                    .ToArray(),
+                scopes = principal.GetScopes()
+                    .OrderBy(value => value, StringComparer.Ordinal)
+                    .ToArray()
+            },
+            request = new
+            {
+                method = httpContext.Request.Method,
+                path = httpContext.Request.Path.Value,
+                traceIdentifier = httpContext.TraceIdentifier
+            },
+            payload
+        };
 
     private static IReadOnlyList<string> BuildImportWarnings(AdminConfigurationDocument document)
     {
