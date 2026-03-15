@@ -108,6 +108,7 @@ internal sealed class IntegrationSeedService(IServiceProvider services) : IHoste
     internal const string AdminClientId       = "admin-cli";
     internal const string AdminClientSecret   = "admin-cli-secret-change-in-prod";
     internal const string InteractiveClientId = "interactive-demo";
+    internal const string AdminDashboardClientId = "admin-dashboard";
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -232,7 +233,36 @@ internal sealed class IntegrationSeedService(IServiceProvider services) : IHoste
                     Permissions.ResponseTypes.Code,
                     Permissions.Scopes.Email,
                     Permissions.Scopes.Profile,
+                    Permissions.Scopes.Roles,
                     $"{Permissions.Prefixes.Scope}openid"
+                },
+                Requirements = { Requirements.Features.ProofKeyForCodeExchange }
+            }, CancellationToken.None);
+        }
+
+        if (await appMgr.FindByClientIdAsync(AdminDashboardClientId, CancellationToken.None) is null)
+        {
+            await appMgr.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId = AdminDashboardClientId,
+                ClientType = ClientTypes.Public,
+                ConsentType = ConsentTypes.Implicit,
+                RedirectUris = { new Uri("http://localhost/admin/callback") },
+                PostLogoutRedirectUris = { new Uri("http://localhost/admin") },
+                Permissions =
+                {
+                    Permissions.Endpoints.Authorization,
+                    Permissions.Endpoints.Token,
+                    Permissions.Endpoints.EndSession,
+                    Permissions.GrantTypes.AuthorizationCode,
+                    Permissions.GrantTypes.RefreshToken,
+                    Permissions.ResponseTypes.Code,
+                    Permissions.Scopes.Email,
+                    Permissions.Scopes.Profile,
+                    Permissions.Scopes.Roles,
+                    $"{Permissions.Prefixes.Scope}openid",
+                    $"{Permissions.Prefixes.Scope}{OpenGateAdminScopes.Read}",
+                    $"{Permissions.Prefixes.Scope}{OpenGateAdminScopes.Write}"
                 },
                 Requirements = { Requirements.Features.ProofKeyForCodeExchange }
             }, CancellationToken.None);

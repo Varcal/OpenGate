@@ -94,8 +94,8 @@ dotnet run
 **Resultado imediato:**
 
 - Identity server rodando em `https://localhost:5001`
-- Login page moderna e responsiva funcionando
-- Admin dashboard em `https://localhost:5001/admin`
+- Login page moderna e responsiva funcionando quando a UI built-in estiver habilitada
+- Admin dashboard built-in em `https://localhost:5001/admin` quando a UI oficial estiver habilitada
 - Endpoints OAuth 2.1/OIDC configurados (`.well-known/openid-configuration`)
 - PKCE obrigatório, refresh token rotation, key auto-rotation — tudo seguro por padrão
 - Swagger da Admin API em `https://localhost:5001/swagger`
@@ -104,9 +104,8 @@ dotnet run
 
 | Componente | O que entrega |
 |------------|---------------|
-| **OpenGate.Server** | Pacote principal: configura o OpenIddict com defaults seguros, middleware de rate limiting, health checks, OpenTelemetry, CORS. Uma linha: `builder.AddOpenGate()` |
-| **OpenGate.UI** | Templates de Login, Consent, Logout, Registro, Erro. Razor Pages com design moderno, dark mode, i18n (pt-BR, en, es). Customizável via CSS e Razor override. |
-| **OpenGate.Admin** | Dashboard Blazor WASM: gerenciar clientes, escopos, usuários, tokens, sessões. Gráficos de métricas em tempo real. RBAC (Admin, Viewer). |
+| **OpenGate.Server** | Pacote principal: configura o OpenIddict com defaults seguros, opções de `UiMode` (`BuiltIn`, `External`, `None`), middleware de rate limiting, health checks, OpenTelemetry, CORS. Uma linha: `builder.AddOpenGate()` |
+| **OpenGate.UI** | UI oficial built-in e opcional: Login, Consent, Logout, Registro e Admin UI em Razor Pages. Design moderno, dark mode e customização via CSS/Razor override. |
 | **OpenGate.Admin.Api** | REST API completa para automação: CRUD de tudo, import/export JSON, webhooks, bulk operations. Documentada com Swagger. |
 | **OpenGate.Data.EFCore** | Stores estendidos para EF Core: user profiles, audit log, sessions, login history. Migrations automáticas. PostgreSQL, SQL Server, SQLite. |
 | **OpenGate.Data.MongoDB** | Mesmos stores estendidos para MongoDB. |
@@ -142,6 +141,7 @@ Tudo que é protocolo vem pronto do OpenIddict via NuGet. Nós não tocamos niss
 - Criar OpenGate.Server: configuração opinativa do OpenIddict com 1 linha (`builder.AddOpenGate()`)
 - Presets de segurança: Development, Production, HighSecurity — ativados por environment
 - UI de Login / Consent / Logout / Registro: Razor Pages modernas, responsivas, com dark mode
+- UI built-in opcional: o host pode usar `UiMode = BuiltIn`, `External` ou `None`
 - Integração com ASP.NET Core Identity para user management
 - EF Core stores estendidos (users, audit log, sessions) com migrations para PostgreSQL, SQL Server, SQLite
 - Template `dotnet new opengate-server` com configuração guiada
@@ -173,7 +173,7 @@ Ao final da Fase 2, um dev .NET deve conseguir:
    - Import/export JSON + operações em lote (bulk) onde fizer sentido
    - Swagger/OpenAPI completo + exemplos (requests/responses)
 
-2) **Admin Dashboard (OpenGate.Admin — Blazor WASM)**
+2) **Admin UI oficial**
    - Listagens com search/filter, formulários de create/edit, validação e estados de loading/erro
    - Viewer do audit log (filtros por período, ator, entidade, ação)
    - Dashboard com métricas operacionais (tokens emitidos, falhas de login, latência p95, etc.)
@@ -212,7 +212,7 @@ Ao final da Fase 2, um dev .NET deve conseguir:
 - **Admin API**
   - 100% das operações essenciais (clientes/escopos/usuários/roles + sessões/tokens para consulta/revogação) disponíveis via REST
   - Swagger atualizado e navegável; erros padronizados; paginação/filtros consistentes
-- **Admin UI**
+- **Admin UI oficial**
   - Fluxos completos de criar/editar/listar para clientes e escopos; gestão básica de usuários; consulta/revogação de sessões/tokens
   - RBAC aplicado (Viewer não altera; Admin altera; Super Admin gerencia permissões)
 - **Migration CLI**
@@ -228,7 +228,7 @@ Ao final da Fase 2, um dev .NET deve conseguir:
 #### Checklist (resumo do escopo)
 
 - Admin REST API: CRUD de clientes, escopos, usuários, tokens. Import/export JSON. Swagger completo.
-- Admin Dashboard (Blazor WASM): listagens com search/filter, forms, dashboard de métricas, audit log viewer
+- Admin UI oficial: listagens com search/filter, forms, dashboard de métricas, audit log viewer
 - RBAC na Admin: Super Admin, Admin, Viewer
 - Migration CLI: `dotnet opengate migrate --source duende|is4 --connection-string ...`
 - Social login templates pré-configurados: Google, Microsoft, GitHub, Apple, Facebook
@@ -260,7 +260,7 @@ Ao final da Fase 2, um dev .NET deve conseguir:
 - [ ] Adicionar Swagger/OpenAPI com exemplos e fluxos documentados
 - [ ] Cobrir endpoints críticos com testes de integração
 
-**2. Admin Dashboard (Blazor WASM)**
+**2. Admin UI oficial**
 
 - [ ] Implementar autenticação/acesso ao painel `/admin`
 - [ ] Criar listagens com busca, filtro, paginação e ordenação
@@ -330,8 +330,8 @@ Ao final da Fase 2, um dev .NET deve conseguir:
    - Definir contratos, autorização, seed do primeiro admin e baseline de testes
 2. **Entidades core da administração**
    - Clients, scopes, usuários, permissões e sessões/tokens
-3. **Admin UI v1**
-   - Painel funcional consumindo a API com listagens, formulários e audit log viewer
+3. **Admin UI oficial v1**
+   - Painel funcional para operação humana com listagens, formulários e audit log viewer
 4. **Import/export + Migration CLI**
    - Primeiro JSON; depois migração Duende/IS4 com `--dry-run`
 5. **Social login + MFA**
@@ -354,7 +354,7 @@ Ao final da Fase 2, um dev .NET deve conseguir:
 | Frente | Owner principal | Apoio |
 |-------|------------------|-------|
 | Admin API + RBAC | Tech Lead / Senior Backend | Security Engineer |
-| Admin UI (Blazor) | Senior Full-Stack | Tech Lead |
+| Admin UI oficial | Senior Full-Stack | Tech Lead |
 | Migration CLI | Senior Backend | Tech Lead |
 | Social Login + MFA | Senior Full-Stack | Security Engineer |
 | Observabilidade / Compose | DevOps / SRE | Tech Lead |
@@ -500,7 +500,7 @@ Ao final da Fase 2, um dev .NET deve conseguir:
 | **Custo** | US$1.5K–35K | Gratuito | Gratuito | **Gratuito** | — |
 | **Nativo .NET** | ✅ | ❌ Java | ✅ | **✅** | — |
 | **Turnkey / Pronto** | ⚠️ Médio | ✅ Sim | ❌ Não | **✅ Sim** | **OpenGate** |
-| **Admin UI** | ❌ Pago | ✅ Sim | ❌ Não | **✅ Blazor** | **OpenGate** |
+| **Admin UI / UI pronta** | ❌ Pago | ✅ Sim | ❌ Não | **✅ Opcional e built-in** | **OpenGate** |
 | **Setup < 5 min** | ⚠️ | ✅ Docker | ❌ Muito código | **✅ dotnet new** | **OpenGate** |
 | **Migration Tool** | N/A | ❌ | ❌ | **✅ CLI** | **OpenGate** |
 | **SAML 2.0** | ✅ Plugin£ | ✅ | ❌ | **✅ Incluso** | **OpenGate** |

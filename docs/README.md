@@ -8,6 +8,7 @@
 2. [Authorization Code + PKCE (Postman)](quickstarts/02-auth-code-pkce.md)
 3. [Client Credentials (curl)](quickstarts/03-client-credentials.md)
 4. [Admin API Headless](quickstarts/04-admin-api-headless.md)
+5. [UI Administrativa Custom](quickstarts/05-custom-admin-ui.md)
 
 ### Referência
 

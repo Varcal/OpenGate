@@ -60,17 +60,13 @@ public static class OpenGateAdminApiExtensions
                     IdentityConstants.ApplicationScheme,
                     ValidationAuthenticationScheme)
                 .RequireAuthenticatedUser()
-                .RequireAssertion(context =>
-                    HasAdministrativeRole(context.User, OpenGateAdminRoles.Viewer, OpenGateAdminRoles.Admin, OpenGateAdminRoles.SuperAdmin)
-                    || HasAdministrativeScope(context.User, OpenGateAdminScopes.Read, OpenGateAdminScopes.Write)))
+                .RequireAssertion(context => HasAdministrativeReadAccess(context.User)))
             .AddPolicy(OpenGateAdminPolicies.ApiAdmin, policy => policy
                 .AddAuthenticationSchemes(
                     IdentityConstants.ApplicationScheme,
                     ValidationAuthenticationScheme)
                 .RequireAuthenticatedUser()
-                .RequireAssertion(context =>
-                    HasAdministrativeRole(context.User, OpenGateAdminRoles.Admin, OpenGateAdminRoles.SuperAdmin)
-                    || HasAdministrativeScope(context.User, OpenGateAdminScopes.Write)))
+                .RequireAssertion(context => HasAdministrativeWriteAccess(context.User)))
             .AddPolicy(OpenGateAdminPolicies.ApiSuperAdmin, policy => policy
                 .AddAuthenticationSchemes(
                     IdentityConstants.ApplicationScheme,
@@ -1804,6 +1800,19 @@ public static class OpenGateAdminApiExtensions
 
     private static bool HasAdministrativeScope(ClaimsPrincipal principal, params string[] scopes)
         => scopes.Any(principal.HasScope);
+
+    private static bool HasAdministrativeReadAccess(ClaimsPrincipal principal)
+        => IsUserPrincipal(principal)
+            ? HasAdministrativeRole(principal, OpenGateAdminRoles.Viewer, OpenGateAdminRoles.Admin, OpenGateAdminRoles.SuperAdmin)
+            : HasAdministrativeScope(principal, OpenGateAdminScopes.Read, OpenGateAdminScopes.Write);
+
+    private static bool HasAdministrativeWriteAccess(ClaimsPrincipal principal)
+        => IsUserPrincipal(principal)
+            ? HasAdministrativeRole(principal, OpenGateAdminRoles.Admin, OpenGateAdminRoles.SuperAdmin)
+            : HasAdministrativeScope(principal, OpenGateAdminScopes.Write);
+
+    private static bool IsUserPrincipal(ClaimsPrincipal principal)
+        => !string.IsNullOrWhiteSpace(principal.FindFirstValue(ClaimTypes.NameIdentifier));
 
     private static object BuildAuditDetails(
         HttpContext httpContext,

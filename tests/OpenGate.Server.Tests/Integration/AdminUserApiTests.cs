@@ -1,7 +1,11 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.DependencyInjection;
+using OpenGate.Data.EFCore.Entities;
 
 namespace OpenGate.Server.Tests.Integration;
 
@@ -17,6 +21,14 @@ public sealed class AdminUserApiTests(OpenGateWebFactory factory)
         "&scope=openid%20email" +
         "&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM" +
         "&code_challenge_method=S256";
+    private const string AdminDashboardAuthorizationUrl = "/connect/authorize" +
+        "?response_type=code" +
+        "&client_id=admin-dashboard" +
+        "&redirect_uri=http%3A%2F%2Flocalhost%2Fadmin%2Fcallback" +
+        "&scope=openid%20email%20profile%20roles%20admin_api" +
+        "&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM" +
+        "&code_challenge_method=S256";
+    private const string PkceVerifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
 
     private static readonly string[] ViewerRole = ["Viewer"];
     private static readonly string[] AdminRole = ["Admin"];
@@ -140,6 +152,123 @@ public sealed class AdminUserApiTests(OpenGateWebFactory factory)
         var authorizeResponse = await userClient.GetAsync(AuthorizationUrl);
         Assert.Equal(HttpStatusCode.Redirect, authorizeResponse.StatusCode);
         Assert.Contains("Login", authorizeResponse.Headers.Location?.ToString() ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Admin_User_Can_Call_AdminApi_With_AuthorizationCode_Bearer_Token()
+    {
+        using var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var accessToken = await RequestUserAccessTokenAsync(client, IntegrationSeedService.DemoEmail, IntegrationSeedService.DemoPassword);
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/admin/api/me");
+        var json = await response.Content.ReadFromJsonAsync<JsonDocument>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(json);
+        Assert.Equal("user", json.RootElement.GetProperty("kind").GetString());
+        Assert.Equal(IntegrationSeedService.DemoEmail, json.RootElement.GetProperty("email").GetString());
+        Assert.Contains(
+            json.RootElement.GetProperty("roles").EnumerateArray().Select(item => item.GetString()),
+            role => role == "SuperAdmin");
+    }
+
+    [Fact]
+    public async Task NonAdmin_User_Bearer_Token_Cannot_Call_AdminApi()
+    {
+        const string email = "frontend-user@opengate.test";
+        const string password = "Frontend@1234!";
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<OpenGateUser>>();
+
+            if (await userManager.FindByEmailAsync(email) is null)
+            {
+                var result = await userManager.CreateAsync(new OpenGateUser
+                {
+                    Email = email,
+                    UserName = email,
+                    EmailConfirmed = true,
+                    IsActive = true
+                }, password);
+
+                Assert.True(result.Succeeded, string.Join("; ", result.Errors.Select(error => error.Description)));
+            }
+        }
+
+        using var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var accessToken = await RequestUserAccessTokenAsync(client, email, password);
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/admin/api/me");
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    private static async Task<string> RequestUserAccessTokenAsync(HttpClient client, string email, string password)
+    {
+        var loginResponse = await LoginAsync(client, email, password);
+        Assert.Equal(HttpStatusCode.Redirect, loginResponse.StatusCode);
+
+        var authorizeResponse = await client.GetAsync(AdminDashboardAuthorizationUrl);
+        string? location;
+
+        if (authorizeResponse.StatusCode == HttpStatusCode.OK)
+        {
+            var consentHtml = await authorizeResponse.Content.ReadAsStringAsync();
+            var antiforgeryToken = ExtractInputValue(consentHtml, "__RequestVerificationToken");
+
+            var allowResponse = await client.PostAsync(AdminDashboardAuthorizationUrl, new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["response_type"] = "code",
+                ["client_id"] = IntegrationSeedService.AdminDashboardClientId,
+                ["redirect_uri"] = "http://localhost/admin/callback",
+                ["scope"] = "openid email profile roles admin_api",
+                ["code_challenge"] = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+                ["code_challenge_method"] = "S256",
+                ["decision"] = "allow",
+                ["__RequestVerificationToken"] = antiforgeryToken
+            }));
+
+            Assert.Equal(HttpStatusCode.Redirect, allowResponse.StatusCode);
+            location = allowResponse.Headers.Location?.ToString();
+        }
+        else
+        {
+            Assert.Equal(HttpStatusCode.Redirect, authorizeResponse.StatusCode);
+            location = authorizeResponse.Headers.Location?.ToString();
+        }
+
+        Assert.False(string.IsNullOrWhiteSpace(location));
+
+        var callbackUri = new Uri(location!, UriKind.RelativeOrAbsolute);
+        if (!callbackUri.IsAbsoluteUri)
+        {
+            callbackUri = new Uri(new Uri("http://localhost"), callbackUri);
+        }
+
+        var query = QueryHelpers.ParseQuery(callbackUri.Query);
+        Assert.True(query.TryGetValue("code", out var codeValues));
+        var code = codeValues.ToString();
+        Assert.False(string.IsNullOrWhiteSpace(code));
+
+        var tokenResponse = await client.PostAsync("/connect/token", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "authorization_code",
+            ["client_id"] = IntegrationSeedService.AdminDashboardClientId,
+            ["redirect_uri"] = "http://localhost/admin/callback",
+            ["code"] = code,
+            ["code_verifier"] = PkceVerifier
+        }));
+
+        var tokenJson = await tokenResponse.Content.ReadFromJsonAsync<JsonDocument>();
+        Assert.Equal(HttpStatusCode.OK, tokenResponse.StatusCode);
+        Assert.NotNull(tokenJson);
+
+        return tokenJson.RootElement.GetProperty("access_token").GetString()
+            ?? throw new InvalidOperationException("The token response did not contain an access token.");
     }
 
     private static async Task<HttpResponseMessage> LoginAsync(HttpClient client, string email, string password)

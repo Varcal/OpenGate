@@ -6,7 +6,7 @@ Fonte: `docs/opengate-identity-projeto.md` secao **4.1 Fase 1 - MVP**.
 |---|---|---|
 | OpenGate.Server: setup em 1 linha (`AddOpenGate`) | FEITO | `src/OpenGate.Server/Extensions/OpenGateServiceCollectionExtensions.cs`, `src/OpenGate.Server/OpenGateBuilder.cs` |
 | Presets de seguranca (Development/Production/HighSecurity) | FEITO | `src/OpenGate.Server/Extensions/OpenGateServiceCollectionExtensions.cs`, `src/OpenGate.Server/Options/OpenGateOptions.cs`, `samples/OpenGate.Sample.Basic/Program.cs` |
-| UI Login / Consent / Logout / Registro (Razor Pages) | FEITO | `src/OpenGate.UI/Pages/Account/Login.*`, `src/OpenGate.UI/Pages/Account/Register.*`, `src/OpenGate.UI/Pages/Connect/Authorize.*`, `src/OpenGate.UI/Pages/Connect/Logout.*`, layout `src/OpenGate.UI/Pages/Shared/_Layout.cshtml` |
+| UI Login / Consent / Logout / Registro (Razor Pages built-in opcional) | FEITO | `src/OpenGate.UI/Pages/Account/Login.*`, `src/OpenGate.UI/Pages/Account/Register.*`, `src/OpenGate.UI/Pages/Connect/Authorize.*`, `src/OpenGate.UI/Pages/Connect/Logout.*`, layout `src/OpenGate.UI/Pages/Shared/_Layout.cshtml`, `src/OpenGate.Server/Options/OpenGateUiMode.cs`, `samples/OpenGate.Sample.Basic/Program.cs` |
 | Integracao com ASP.NET Core Identity | FEITO | `src/OpenGate.Data.EFCore/Extensions/OpenGateDataExtensions.cs`, `src/OpenGate.Data.EFCore/OpenGateDbContext.cs`, `src/OpenGate.Server/OpenGateBuilder.cs` |
 | EF Core stores estendidos + migrations para PostgreSQL/SQL Server/SQLite | FEITO | SQL Server: `src/OpenGate.Data.EFCore/Migrations/sqlserver/*`; PostgreSQL: `src/OpenGate.Data.EFCore.Migrations.PostgreSql/Migrations/*`; SQLite: `src/OpenGate.Data.EFCore.Migrations.Sqlite/Migrations/*`; scripts: `scripts/ef-add-migration.ps1`, `scripts/ef-update-db.ps1` |
 | Template `dotnet new opengate-server` (config guiada) | FEITO (in-repo) | `templates/opengate-server/.template.config/template.json` + conteudo do template |
@@ -18,6 +18,16 @@ Fonte: `docs/opengate-identity-projeto.md` secao **4.1 Fase 1 - MVP**.
 ### Observacao sobre o template
 
 O template atual e **in-repo**: ele gera um servidor que referencia `src/` via `ProjectReference`. Isso permite desenvolvimento/testes locais antes de publicar pacotes no NuGet.
+
+### Observacao sobre UI
+
+A UI oficial do projeto e opcional. O backend suporta:
+
+- `BuiltIn`: usa `OpenGate.UI`
+- `External`: o host fornece UI propria
+- `None`: operacao sem UI interativa
+
+Isso permite manter a UI oficial como implementacao pronta para uso, sem torna-la obrigatoria para quem quiser construir login/Admin UI fora do projeto.
 
 ### Resumo de fechamento da Fase 1
 

@@ -180,6 +180,43 @@ public sealed partial class SeedDataService(
             Log.ClientCreated(logger, "interactive-demo");
         }
 
+        if (await mgr.FindByClientIdAsync("admin-dashboard", ct) is null)
+        {
+            await mgr.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId = "admin-dashboard",
+                DisplayName = "Admin Dashboard (Custom UI + PKCE)",
+                ClientType = ClientTypes.Public,
+                ConsentType = ConsentTypes.Implicit,
+                RedirectUris =
+                {
+                    new Uri("http://localhost/admin/callback")
+                },
+                PostLogoutRedirectUris =
+                {
+                    new Uri("http://localhost/admin")
+                },
+                Permissions =
+                {
+                    Permissions.Endpoints.Authorization,
+                    Permissions.Endpoints.Token,
+                    Permissions.Endpoints.EndSession,
+                    Permissions.GrantTypes.AuthorizationCode,
+                    Permissions.GrantTypes.RefreshToken,
+                    Permissions.ResponseTypes.Code,
+                    Permissions.Scopes.Email,
+                    Permissions.Scopes.Profile,
+                    Permissions.Scopes.Roles,
+                    $"{Permissions.Prefixes.Scope}openid",
+                    $"{Permissions.Prefixes.Scope}{OpenGateAdminScopes.Read}",
+                    $"{Permissions.Prefixes.Scope}{OpenGateAdminScopes.Write}"
+                },
+                Requirements = { Requirements.Features.ProofKeyForCodeExchange }
+            }, ct);
+
+            Log.ClientCreated(logger, "admin-dashboard");
+        }
+
         // ── Machine (Client Credentials) ──────────────────────────────────────
         if (await mgr.FindByClientIdAsync("machine-demo", ct) is null)
         {

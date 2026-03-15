@@ -12,6 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 // ── OpenGate Identity Server ─────────────────────────────────────────────────
 // Read connection string — validation deferred to first DB use so tests can replace the DbContext.
 var connectionString = builder.Configuration.GetConnectionString("OpenGate") ?? string.Empty;
+var uiMode = ProgramUiMode.ParseUiMode(builder.Configuration["OpenGate:UiMode"]);
+var builtInUiEnabled = uiMode == OpenGateUiMode.BuiltIn;
 
 builder.Services
     .AddOpenGate(opt =>
@@ -19,6 +21,7 @@ builder.Services
         opt.SecurityPreset = builder.Environment.IsDevelopment()
             ? OpenGateSecurityPreset.Development
             : OpenGateSecurityPreset.Production;
+        opt.UiMode = uiMode;
 
         if (builder.Configuration["OpenGate:IssuerUri"] is { Length: > 0 } issuer)
             opt.IssuerUri = new Uri(issuer);
@@ -26,8 +29,12 @@ builder.Services
     .UseSqlServer(connectionString)
     .Build();
 
-// ── Razor Pages — serves OpenGate.UI pages ───────────────────────────────────
-builder.Services.AddRazorPages();
+// ── Razor Pages — serves OpenGate.UI pages when built-in UI is enabled ─────
+if (builtInUiEnabled)
+{
+    builder.Services.AddRazorPages();
+}
+
 builder.Services.AddOpenApi("v1");
 builder.Services.AddOpenGateAdminApi();
 
@@ -45,7 +52,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 // Static files — includes _content/OpenGate.UI/css/opengate.css from the RCL
-app.UseStaticFiles();
+if (builtInUiEnabled)
+{
+    app.UseStaticFiles();
+}
 
 app.UseRouting();
 app.UseAuthentication();
@@ -59,14 +69,25 @@ if (app.Environment.IsDevelopment())
         .WithOpenApiRoutePattern("/openapi/{documentName}.json"));
 }
 
-app.MapRazorPages();
+if (builtInUiEnabled)
+{
+    app.MapRazorPages();
+}
+
 app.MapOpenGateAdminApi();
 
-// Root page:
-// - Anonymous users: redirect to Login
-// - Authenticated users: show a tiny "you are logged in" landing page
 app.MapGet("/", (HttpContext ctx) =>
 {
+    if (!builtInUiEnabled)
+    {
+        return Results.Ok(new
+        {
+            name = "OpenGate.Sample.Basic",
+            uiMode = uiMode.ToString(),
+            endpoints = ProgramUiMode.BackendOnlyEndpoints
+        });
+    }
+
     if (ctx.User.Identity?.IsAuthenticated != true)
         return Results.Redirect("/Account/Login");
 

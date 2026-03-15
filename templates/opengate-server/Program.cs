@@ -8,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // 1 OpenGate Identity Server 1
 var connectionString = builder.Configuration.GetConnectionString("OpenGate") ?? string.Empty;
+var uiMode = ProgramUiMode.ParseUiMode(builder.Configuration["OpenGate:UiMode"]);
+var builtInUiEnabled = uiMode == OpenGateUiMode.BuiltIn;
 
 builder.Services
     .AddOpenGate(opt =>
@@ -15,6 +17,7 @@ builder.Services
         opt.SecurityPreset = builder.Environment.IsDevelopment()
             ? OpenGateSecurityPreset.Development
             : OpenGateSecurityPreset.Production;
+        opt.UiMode = uiMode;
 
         if (builder.Configuration["OpenGate:IssuerUri"] is { Length: > 0 } issuer)
             opt.IssuerUri = new Uri(issuer);
@@ -22,8 +25,11 @@ builder.Services
     .UseConfiguredDatabase(builder.Configuration, connectionString)
     .Build();
 
-// Razor Pages 1 serves OpenGate.UI pages
-builder.Services.AddRazorPages();
+// Razor Pages 1 serves OpenGate.UI pages when built-in UI is enabled
+if (builtInUiEnabled)
+{
+    builder.Services.AddRazorPages();
+}
 
 //#if (seed)
 builder.Services.AddHostedService<SeedDataService>();
@@ -38,18 +44,31 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.UseStaticFiles();
+if (builtInUiEnabled)
+{
+    app.UseStaticFiles();
+}
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapRazorPages();
+if (builtInUiEnabled)
+{
+    app.MapRazorPages();
+}
 
-// Root page:
-// - Anonymous users: redirect to Login
-// - Authenticated users: show a tiny landing page
 app.MapGet("/", (HttpContext ctx) =>
 {
+    if (!builtInUiEnabled)
+    {
+        return Results.Ok(new
+        {
+            name = "OpenGate Server",
+            uiMode = uiMode.ToString(),
+            endpoints = ProgramUiMode.BackendOnlyEndpoints
+        });
+    }
+
     if (ctx.User.Identity?.IsAuthenticated != true)
         return Results.Redirect("/Account/Login");
 
@@ -83,6 +102,21 @@ app.Run();
 
 // Required for WebApplicationFactory<Program> in integration tests (if you add them)
 public partial class Program { }
+
+internal static class ProgramUiMode
+{
+    public static readonly string[] BackendOnlyEndpoints =
+    [
+        "/.well-known/openid-configuration",
+        "/connect/token",
+        "/health"
+    ];
+
+    public static OpenGateUiMode ParseUiMode(string? raw)
+        => Enum.TryParse<OpenGateUiMode>(raw, ignoreCase: true, out var uiMode)
+            ? uiMode
+            : OpenGateUiMode.BuiltIn;
+}
 
 internal static class OpenGateBuilderDatabaseExtensions
 {

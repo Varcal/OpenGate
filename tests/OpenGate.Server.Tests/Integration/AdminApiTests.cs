@@ -11,8 +11,7 @@ public sealed class AdminApiTests(OpenGateWebFactory factory)
     : IClassFixture<OpenGateWebFactory>
 {
     private readonly HttpClient _client = factory.CreateClient(new() { AllowAutoRedirect = false });
-    private static readonly string[] value = new[] { "opengate_admin_api" };
-    private static readonly string[] valueArray = new[] { "opengate_admin_api" };
+    private static readonly string[] AdminApiResource = ["opengate_admin_api"];
 
     [Fact]
     public async Task AdminApi_Unauthenticated_Returns_Unauthorized()
@@ -92,7 +91,7 @@ public sealed class AdminApiTests(OpenGateWebFactory factory)
         {
             name = "forbidden-scope",
             displayName = "Forbidden Scope",
-            resources = value
+            resources = AdminApiResource
         });
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -111,7 +110,7 @@ public sealed class AdminApiTests(OpenGateWebFactory factory)
             name = "headless-admin-scope",
             displayName = "Headless Admin Scope",
             description = "Created through bearer token automation",
-            resources = valueArray
+            resources = AdminApiResource
         });
 
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);

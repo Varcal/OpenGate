@@ -3,9 +3,10 @@
 ### 1) OpenGate.Sample.Basic
 
 - Caminho: `samples/OpenGate.Sample.Basic`
-- O que mostra: servidor OpenGate completo (UI + seeding + endpoints OIDC + Admin API headless)
+- O que mostra: servidor OpenGate base com seeding, endpoints OIDC, Admin API e suporte a `UiMode = BuiltIn | External | None`
 - Rodar: `dotnet run --project samples/OpenGate.Sample.Basic`
 - Inclui client seedado para automação administrativa: `admin-cli`
+- Inclui client público de exemplo para Admin UI externa: `admin-dashboard`
 
 ### 2) OpenGate.Sample.ProtectedApi
 
@@ -38,12 +39,12 @@
 ### 7) OpenGate.Sample.PostgreSql
 
 - Caminho: `samples/OpenGate.Sample.PostgreSql`
-- O que mostra: servidor OpenGate com provider PostgreSQL pronto para validar
+- O que mostra: servidor OpenGate com provider PostgreSQL pronto para validar, usando a UI oficial built-in por padrão
 - Subir banco: `docker compose -f samples/OpenGate.Sample.PostgreSql/docker-compose.postgres.yml up -d`
 - Rodar: `dotnet run --project samples/OpenGate.Sample.PostgreSql`
 
 ### 8) OpenGate.Sample.Sqlite
 
 - Caminho: `samples/OpenGate.Sample.Sqlite`
-- O que mostra: servidor OpenGate com provider SQLite pronto para validar
+- O que mostra: servidor OpenGate com provider SQLite pronto para validar, usando a UI oficial built-in por padrão
 - Rodar: `dotnet run --project samples/OpenGate.Sample.Sqlite`

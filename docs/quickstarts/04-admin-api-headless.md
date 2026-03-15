@@ -6,6 +6,7 @@ Este quickstart mostra como administrar o OpenGate sem UI usando `client_credent
 
 - rode `samples/OpenGate.Sample.Basic`
 - use o seed padrão do sample
+- opcionalmente, para simular backend-only, configure `OpenGate:UiMode` como `None`
 
 O sample cria um client administrativo de automação:
 

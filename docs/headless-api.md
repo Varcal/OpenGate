@@ -17,6 +17,7 @@ Referências:
 - [API Reference](api-reference.md)
 - [Quickstart 3 - Client Credentials (curl)](quickstarts/03-client-credentials.md)
 - [Quickstart 4 - Admin API Headless](quickstarts/04-admin-api-headless.md)
+- [Quickstart 5 - UI Administrativa Custom](quickstarts/05-custom-admin-ui.md)
 
 ### O que funciona sem UI
 
@@ -50,6 +51,24 @@ O projeto também expõe uma Admin API REST em `/admin/api`, com endpoints para:
 - import/export de configuração
 
 Isso permite administrar o OpenGate por HTTP em vez de usar a Admin UI.
+
+### UI administrativa totalmente própria
+
+Além da automação headless com `client_credentials`, o OpenGate também suporta o cenário em que um frontend próprio autentica um usuário administrativo e chama a Admin API por bearer token.
+
+Nesse modelo:
+
+- a UI custom usa `authorization_code + PKCE`
+- o token do usuário pode carregar `role` quando o cliente solicita o escopo `roles`
+- a Admin API reaproveita as mesmas roles administrativas já usadas na experiência web
+
+O sample principal cria um client público de exemplo para esse cenário:
+
+- `client_id`: `admin-dashboard`
+- fluxo: `authorization_code + PKCE`
+- uso esperado: frontend administrativo próprio
+
+Esse modo permite substituir a UI oficial sem criar uma segunda identidade administrativa.
 
 ### Autenticação da Admin API
 
@@ -142,6 +161,37 @@ Use a API quando quiser:
 - integrações CI/CD
 - administração remota sem browser
 
+### Modo de UI no servidor
+
+O `OpenGateOptions` agora suporta um modo explícito de UI:
+
+- `BuiltIn`: usa `OpenGate.UI` e as rotas padrão
+- `External`: usa UI própria do host, com `LoginPath` e `AccessDeniedPath` customizáveis
+- `None`: sobe o servidor sem UI interativa, adequado para protocolo/API-only
+
+Em uma aplicação host, isso permite cenários como:
+
+```csharp
+builder.Services
+    .AddOpenGate(options =>
+    {
+        options.UiMode = OpenGateUiMode.External;
+        options.LoginPath = "/auth/login";
+        options.AccessDeniedPath = "/auth/denied";
+    })
+    .UseSqlServer(connectionString)
+    .Build();
+```
+
+No modo `External` ou `None`, a aplicação não precisa usar `OpenGate.UI`.
+
+No modo `External`, a expectativa é:
+
+- o host define `LoginPath` e `AccessDeniedPath`
+- a UI própria conduz o login do usuário
+- a UI própria usa OIDC para obter bearer token quando quiser consumir `/admin/api`
+- a Admin UI oficial deixa de ser obrigatória
+
 ### Resumo prático
 
 Hoje o OpenGate suporta:
@@ -149,3 +199,4 @@ Hoje o OpenGate suporta:
 1. uso sem UI para os endpoints OAuth/OIDC
 2. uso sem UI para a Admin API com bearer token e scopes administrativos
 3. uso web tradicional para administradores humanos via cookie e Admin UI
+4. UI custom usando `authorization_code + PKCE` para obter bearer token de usuário admin e consumir `/admin/api`

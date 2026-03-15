@@ -18,6 +18,21 @@ public sealed class OpenGateOptionsTests
     }
 
     [Fact]
+    public void Options_Default_UiMode_Is_BuiltIn()
+    {
+        var options = new OpenGateOptions();
+        Assert.Equal(OpenGateUiMode.BuiltIn, options.UiMode);
+    }
+
+    [Fact]
+    public void Options_Default_Login_And_AccessDenied_Paths_Are_BuiltIn_Routes()
+    {
+        var options = new OpenGateOptions();
+        Assert.Equal("/Account/Login", options.LoginPath);
+        Assert.Equal("/Account/AccessDenied", options.AccessDeniedPath);
+    }
+
+    [Fact]
     public void Options_Default_AccessTokenLifetime_Is_OneHour()
     {
         var options = new OpenGateOptions();
@@ -100,6 +115,21 @@ public sealed class OpenGateOptionsTests
         Assert.Equal(uri, options.IssuerUri);
     }
 
+    [Fact]
+    public void Options_Can_Override_Ui_Settings()
+    {
+        var options = new OpenGateOptions
+        {
+            UiMode = OpenGateUiMode.External,
+            LoginPath = "/auth/sign-in",
+            AccessDeniedPath = "/auth/forbidden"
+        };
+
+        Assert.Equal(OpenGateUiMode.External, options.UiMode);
+        Assert.Equal("/auth/sign-in", options.LoginPath);
+        Assert.Equal("/auth/forbidden", options.AccessDeniedPath);
+    }
+
     // ── SecurityPreset enum ───────────────────────────────────────────────────
 
     [Fact]
@@ -118,4 +148,3 @@ public sealed class OpenGateOptionsTests
         Assert.True(Enum.IsDefined(preset));
     }
 }
-

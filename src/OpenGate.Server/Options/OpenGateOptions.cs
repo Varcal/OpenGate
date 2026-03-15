@@ -8,6 +8,28 @@ namespace OpenGate.Server.Options;
 /// </summary>
 public sealed class OpenGateOptions
 {
+    // ── UI ───────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Controls whether the host uses the built-in OpenGate UI, a custom UI, or no interactive UI.
+    /// Default: <see cref="OpenGateUiMode.BuiltIn"/>.
+    /// </summary>
+    public OpenGateUiMode UiMode { get; set; } = OpenGateUiMode.BuiltIn;
+
+    /// <summary>
+    /// Login path used by the Identity application cookie challenge.
+    /// For custom UI scenarios, point this to your own login route.
+    /// Default: <c>/Account/Login</c>.
+    /// </summary>
+    public string LoginPath { get; set; } = "/Account/Login";
+
+    /// <summary>
+    /// Access denied path used by the Identity application cookie.
+    /// For custom UI scenarios, point this to your own route.
+    /// Default: <c>/Account/AccessDenied</c>.
+    /// </summary>
+    public string AccessDeniedPath { get; set; } = "/Account/AccessDenied";
+
     // ── Security ──────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -105,4 +127,3 @@ public sealed class OpenGateOptions
     /// </summary>
     public bool EnableRevocation { get; set; } = true;
 }
-

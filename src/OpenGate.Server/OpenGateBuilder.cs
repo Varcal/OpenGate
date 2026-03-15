@@ -213,6 +213,12 @@ public class OpenGateBuilder<TContext>
             })
             .AddIdentityCookies();
 
+        _services.ConfigureApplicationCookie(cookie =>
+        {
+            cookie.LoginPath = _options.LoginPath;
+            cookie.AccessDeniedPath = _options.AccessDeniedPath;
+        });
+
         return this;
     }
 }

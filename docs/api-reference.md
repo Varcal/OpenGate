@@ -42,6 +42,9 @@
 - Arquivo: `src/OpenGate.Server/Options/OpenGateOptions.cs`
 - Principais opções:
   - `SecurityPreset`: `Development | Production | HighSecurity`
+  - `UiMode`: `BuiltIn | External | None`
   - `IssuerUri`: define o `issuer` no discovery
+  - `LoginPath`: rota usada pelo challenge de autenticação interativa
+  - `AccessDeniedPath`: rota usada para access denied em cenários web
   - Paths (defaults):
     - `/connect/authorize`, `/connect/token`, `/connect/logout`, `/connect/userinfo`
